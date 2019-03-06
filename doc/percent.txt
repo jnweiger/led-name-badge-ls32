@@ -1,0 +1,228 @@
+No.     Time           Source                Destination           Protocol Length Info
+      1 0.000000       host                  2.7.1                 USB      128    URB_INTERRUPT out
+
+Frame 1: 128 bytes on wire (1024 bits), 128 bytes captured (1024 bits) on interface 0
+    Interface id: 0 (usbmon0)
+        Interface name: usbmon0
+    Encapsulation type: USB packets with Linux header and padding (115)
+    Arrival Time: Mar  5, 2019 23:36:49.969444000 CET
+    [Time shift for this packet: 0.000000000 seconds]
+    Epoch Time: 1551825409.969444000 seconds
+    [Time delta from previous captured frame: 0.000000000 seconds]
+    [Time delta from previous displayed frame: 0.000000000 seconds]
+    [Time since reference or first frame: 0.000000000 seconds]
+    Frame Number: 1
+    Frame Length: 128 bytes (1024 bits)
+    Capture Length: 128 bytes (1024 bits)
+    [Frame is marked: False]
+    [Frame is ignored: False]
+    [Protocols in frame: usb]
+USB URB
+    [Source: host]
+    [Destination: 2.7.1]
+    URB id: 0xffffa0179a0d7480
+    URB type: URB_SUBMIT ('S')
+    URB transfer type: URB_INTERRUPT (0x01)
+    Endpoint: 0x01, Direction: OUT
+        0... .... = Direction: OUT (0)
+        .... 0001 = Endpoint number: 1
+    Device: 7
+    URB bus id: 2
+    Device setup request: not relevant ('-')
+    Data: present (0)
+    URB sec: 1551825409
+    URB usec: 969444
+    URB status: Operation now in progress (-EINPROGRESS) (-115)
+    URB length [bytes]: 64
+    Data length [bytes]: 64
+    [Response in: 2]
+    [bInterfaceClass: Unknown (0xffff)]
+    Unused Setup Header
+    Interval: 1
+    Start frame: 0
+    Copy of Transfer Flags: 0x00000000
+    Number of ISO descriptors: 0
+Leftover Capture Data: 77616e670000000040464748404446470001000000000000...
+
+0000  80 74 0d 9a 17 a0 ff ff 53 01 01 07 02 00 2d 00   .t......S.....-.
+0010  01 fa 7e 5c 00 00 00 00 e4 ca 0e 00 8d ff ff ff   ..~\............
+0020  40 00 00 00 40 00 00 00 00 00 00 00 00 00 00 00   @...@...........
+0030  01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00   ................
+0040  77 61 6e 67 00 00 00 00 40 46 47 48 40 44 46 47   wang....@FGH@DFG
+character counts:
+          1     0     0     0     0     0     0     0
+0050  00 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00   ................
+0060  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00   ................
+0070  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00   ................
+
+No.     Time           Source                Destination           Protocol Length Info
+      2 0.000412       2.7.1                 host                  USB      64     URB_INTERRUPT out
+
+Frame 2: 64 bytes on wire (512 bits), 64 bytes captured (512 bits) on interface 0
+    Interface id: 0 (usbmon0)
+        Interface name: usbmon0
+    Encapsulation type: USB packets with Linux header and padding (115)
+    Arrival Time: Mar  5, 2019 23:36:49.969856000 CET
+    [Time shift for this packet: 0.000000000 seconds]
+    Epoch Time: 1551825409.969856000 seconds
+    [Time delta from previous captured frame: 0.000412000 seconds]
+    [Time delta from previous displayed frame: 0.000412000 seconds]
+    [Time since reference or first frame: 0.000412000 seconds]
+    Frame Number: 2
+    Frame Length: 64 bytes (512 bits)
+    Capture Length: 64 bytes (512 bits)
+    [Frame is marked: False]
+    [Frame is ignored: False]
+    [Protocols in frame: usb]
+USB URB
+    [Source: 2.7.1]
+    [Destination: host]
+    URB id: 0xffffa0179a0d7480
+    URB type: URB_COMPLETE ('C')
+    URB transfer type: URB_INTERRUPT (0x01)
+    Endpoint: 0x01, Direction: OUT
+        0... .... = Direction: OUT (0)
+        .... 0001 = Endpoint number: 1
+    Device: 7
+    URB bus id: 2
+    Device setup request: not relevant ('-')
+    Data: not present ('>')
+    URB sec: 1551825409
+    URB usec: 969856
+    URB status: Success (0)
+    URB length [bytes]: 64
+    Data length [bytes]: 0
+    [Request in: 1]
+    [Time from request: 0.000412000 seconds]
+    [bInterfaceClass: Unknown (0xffff)]
+    Unused Setup Header
+    Interval: 1
+    Start frame: 0
+    Copy of Transfer Flags: 0x00000000
+    Number of ISO descriptors: 0
+
+0000  80 74 0d 9a 17 a0 ff ff 43 01 01 07 02 00 2d 3e   .t......C.....->
+0010  01 fa 7e 5c 00 00 00 00 80 cc 0e 00 00 00 00 00   ..~\............
+0020  40 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00   @...............
+0030  01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00   ................
+
+No.     Time           Source                Destination           Protocol Length Info
+      3 0.000609       host                  2.7.1                 USB      128    URB_INTERRUPT out
+
+Frame 3: 128 bytes on wire (1024 bits), 128 bytes captured (1024 bits) on interface 0
+    Interface id: 0 (usbmon0)
+        Interface name: usbmon0
+    Encapsulation type: USB packets with Linux header and padding (115)
+    Arrival Time: Mar  5, 2019 23:36:49.970053000 CET
+    [Time shift for this packet: 0.000000000 seconds]
+    Epoch Time: 1551825409.970053000 seconds
+    [Time delta from previous captured frame: 0.000197000 seconds]
+    [Time delta from previous displayed frame: 0.000197000 seconds]
+    [Time since reference or first frame: 0.000609000 seconds]
+    Frame Number: 3
+    Frame Length: 128 bytes (1024 bits)
+    Capture Length: 128 bytes (1024 bits)
+    [Frame is marked: False]
+    [Frame is ignored: False]
+    [Protocols in frame: usb]
+USB URB
+    [Source: host]
+    [Destination: 2.7.1]
+    URB id: 0xffffa0179a0d76c0
+    URB type: URB_SUBMIT ('S')
+    URB transfer type: URB_INTERRUPT (0x01)
+    Endpoint: 0x01, Direction: OUT
+        0... .... = Direction: OUT (0)
+        .... 0001 = Endpoint number: 1
+    Device: 7
+    URB bus id: 2
+    Device setup request: not relevant ('-')
+    Data: present (0)
+    URB sec: 1551825409
+    URB usec: 970053
+    URB status: Operation now in progress (-EINPROGRESS) (-115)
+    URB length [bytes]: 64
+    Data length [bytes]: 64
+    [Response in: 4]
+    [bInterfaceClass: Unknown (0xffff)]
+    Unused Setup Header
+    Interval: 1
+    Start frame: 0
+    Copy of Transfer Flags: 0x00000000
+    Number of ISO descriptors: 0
+Leftover Capture Data: 006092966c106cd2920c0048404446470001000000000000...
+
+0000  c0 76 0d 9a 17 a0 ff ff 53 01 01 07 02 00 2d 00   .v......S.....-.
+0010  01 fa 7e 5c 00 00 00 00 45 cd 0e 00 8d ff ff ff   ..~\....E.......
+0020  40 00 00 00 40 00 00 00 00 00 00 00 00 00 00 00   @...@...........
+0030  01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00   ................
+
+0040  00 60 92 96 6c 10 6c d2 92 0c 00 
+ 00  . . . . . . . . 
+ 60  . @ @ . . . . .
+ 92  @ . . @ . . @ . 
+ 96  @ . . @ . @ @ .
+ 6c  . @ @ . @ @ . .
+ 10  . . . @ . . . .
+ 6c  . @ @ . @ @ . .
+ d2  @ @ . @ . . @ .
+ 92  @ . . @ . . @ .
+ 0c  . . . . @ @ . .
+ 00  . . . . . . . .
+
+                                       48 40 44 46 47   .`..l.l....H@DFG
+0050  00 01 00 00 00 00 
+                        00 00 00 00 00 00 00 00 00 00   ................
+0060  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00   ................
+0070  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00   ................
+
+No.     Time           Source                Destination           Protocol Length Info
+      4 0.001427       2.7.1                 host                  USB      64     URB_INTERRUPT out
+
+Frame 4: 64 bytes on wire (512 bits), 64 bytes captured (512 bits) on interface 0
+    Interface id: 0 (usbmon0)
+        Interface name: usbmon0
+    Encapsulation type: USB packets with Linux header and padding (115)
+    Arrival Time: Mar  5, 2019 23:36:49.970871000 CET
+    [Time shift for this packet: 0.000000000 seconds]
+    Epoch Time: 1551825409.970871000 seconds
+    [Time delta from previous captured frame: 0.000818000 seconds]
+    [Time delta from previous displayed frame: 0.000818000 seconds]
+    [Time since reference or first frame: 0.001427000 seconds]
+    Frame Number: 4
+    Frame Length: 64 bytes (512 bits)
+    Capture Length: 64 bytes (512 bits)
+    [Frame is marked: False]
+    [Frame is ignored: False]
+    [Protocols in frame: usb]
+USB URB
+    [Source: 2.7.1]
+    [Destination: host]
+    URB id: 0xffffa0179a0d76c0
+    URB type: URB_COMPLETE ('C')
+    URB transfer type: URB_INTERRUPT (0x01)
+    Endpoint: 0x01, Direction: OUT
+        0... .... = Direction: OUT (0)
+        .... 0001 = Endpoint number: 1
+    Device: 7
+    URB bus id: 2
+    Device setup request: not relevant ('-')
+    Data: not present ('>')
+    URB sec: 1551825409
+    URB usec: 970871
+    URB status: Success (0)
+    URB length [bytes]: 64
+    Data length [bytes]: 0
+    [Request in: 3]
+    [Time from request: 0.000818000 seconds]
+    [bInterfaceClass: Unknown (0xffff)]
+    Unused Setup Header
+    Interval: 1
+    Start frame: 0
+    Copy of Transfer Flags: 0x00000000
+    Number of ISO descriptors: 0
+
+0000  c0 76 0d 9a 17 a0 ff ff 43 01 01 07 02 00 2d 3e   .v......C.....->
+0010  01 fa 7e 5c 00 00 00 00 77 d0 0e 00 00 00 00 00   ..~\....w.......
+0020  40 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00   @...............
+0030  01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00   ................

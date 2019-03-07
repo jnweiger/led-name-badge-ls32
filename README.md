@@ -1,6 +1,8 @@
 # led-badge-44x11
 Upload tool for an led name tag with USB-HID interface
 
+![LED Mini Board](green_badge.jpg)
+
 # Warning
 
 There are many different versions of LED Badges on the market.

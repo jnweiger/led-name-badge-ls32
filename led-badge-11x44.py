@@ -14,11 +14,12 @@
 #
 # v0.1, 2019-03-05, jw  initial draught. HID code is much simpler than expected.
 # v0.2, 2019-03-07, jw  support for loading bitmaps added.
+# v0.3              jw  option -l to load graphics for inline use in text.
 
 import sys, os, re, array, time, argparse
 import usb.core
 
-__version = "0.2"
+__version = "0.3"
 
 font_11x44 = (
   # 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -65,8 +66,8 @@ font_11x44 = (
   0x00, 0x00, 0x00, 0x00, 0xec, 0xfe, 0xd6, 0xd6, 0xd6, 0xc6, 0x00,
   0x00, 0x00, 0x00, 0x00, 0xdc, 0x66, 0x66, 0x66, 0x66, 0x66, 0x00,
   0x00, 0x00, 0x00, 0x00, 0x7c, 0xc6, 0xc6, 0xc6, 0xc6, 0x7c, 0x00,
-  0x00, 0x00, 0x00, 0xdc, 0x66, 0x66, 0x66, 0x7c, 0x60, 0x60, 0xf0,
-  0x00, 0x00, 0x00, 0x7c, 0xcc, 0xcc, 0xcc, 0x7c, 0x0c, 0x0c, 0x1e,
+  0x00, 0x00, 0x00, 0x00, 0xdc, 0x66, 0x66, 0x7c, 0x60, 0x60, 0xf0,
+  0x00, 0x00, 0x00, 0x00, 0x7c, 0xcc, 0xcc, 0x7c, 0x0c, 0x0c, 0x1e,
   0x00, 0x00, 0x00, 0x00, 0xde, 0x76, 0x60, 0x60, 0x60, 0xf0, 0x00,
   0x00, 0x00, 0x00, 0x00, 0x7c, 0xc6, 0x70, 0x1c, 0xc6, 0x7c, 0x00,
   0x00, 0x10, 0x30, 0x30, 0xfc, 0x30, 0x30, 0x30, 0x34, 0x18, 0x00,
@@ -149,23 +150,28 @@ char_offset = {}
 for i in range(len(charmap)):
   char_offset[charmap[i]] = 11 * i
 
+bitmap_loaded = [ ([],0) ]
 
 def bitmap_char(ch):
   """ Returns a tuple of 11 bytes,
       ch = '_' returns (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255)
       The bits in each byte are horizontal, highest bit is left.
   """
+  if ord(ch) < 32: return bitmap_loaded[ord(ch)]
   o = char_offset[ch]
-  return font_11x44[o:o+11]
+  return (font_11x44[o:o+11],1)
 
 
 def bitmap_text(text):
   """ returns a tuple of (buffer, length_in_byte_columns_aka_chars)
   """
   buf = array.array('B')
+  cols = 0
   for c in text:
-    buf.extend(bitmap_char(c))
-  return (buf, len(text))
+    (b,n) = bitmap_char(c)
+    buf.extend(b)
+    cols += n
+  return (buf, cols)
 
 
 def bitmap_img(file):
@@ -231,6 +237,7 @@ def header(lengths, speeds, modes):
 parser = argparse.ArgumentParser(description='%s Version %s -- upload messages to a 44x11 led badge via USB HID. https://github.com/jnweiger/led-badge-44x11' % (sys.argv[0], __version))
 parser.add_argument('-s', '--speed', default='4', help="Scroll speed. Up to 8 comma-seperated values (range 1..8)")
 parser.add_argument('-m', '--mode',  default='0', help="Up to 8 mode values: Scroll-left(0) -right(1) -up(2) -down(3); still-centered(4) -left(5); drop-down(6); curtain(7); laser(8)")
+parser.add_argument('-l', '--load',  metavar='FILE', action='append', help="Bitmap images, made available as ^A, ^B, ^C, ... in text messages")
 parser.add_argument('message', nargs='+', help="Up to 8 message texts or image file names")
 args = parser.parse_args()
 
@@ -244,6 +251,9 @@ if dev.is_kernel_driver_active(0):
 dev.set_configuration()
 print("using [%s %s] bus=%d dev=%d" % (dev.manufacturer, dev.product, dev.bus, dev.address))
 
+if args.load:
+  for file in args.load:
+    bitmap_loaded.append(bitmap_img(file))
 
 msgs = []
 for arg in args.message:

@@ -15,7 +15,7 @@
 # v0.1, 2019-03-05, jw  initial draught. HID code is much simpler than expected.
 # v0.2, 2019-03-07, jw  support for loading bitmaps added.
 
-import sys, os, array, time
+import sys, os, re, array, time, argparse
 import usb.core
 
 __version = "0.2"
@@ -74,7 +74,7 @@ font_11x44 = (
   0x00, 0x00, 0x00, 0x00, 0xc6, 0xc6, 0xc6, 0x6c, 0x38, 0x10, 0x00,
   0x00, 0x00, 0x00, 0x00, 0xc6, 0xd6, 0xd6, 0xd6, 0xfe, 0x6c, 0x00,
   0x00, 0x00, 0x00, 0x00, 0xc6, 0x6c, 0x38, 0x38, 0x6c, 0xc6, 0x00,
-  0x00, 0x00, 0x00, 0xc6, 0xc6, 0xc6, 0xc6, 0x7e, 0x06, 0x0c, 0xf8,
+  0x00, 0x00, 0x00, 0x00, 0xc6, 0xc6, 0xc6, 0x7e, 0x06, 0x0c, 0xf8,
   0x00, 0x00, 0x00, 0x00, 0xfe, 0x8c, 0x18, 0x30, 0x62, 0xfe, 0x00,
 
   # '0987654321^ !"\0$%&/()=?` °\\}][{' + "@ ~ |<>,;.:-_#'+* "
@@ -149,6 +149,7 @@ char_offset = {}
 for i in range(len(charmap)):
   char_offset[charmap[i]] = 11 * i
 
+
 def bitmap_char(ch):
   """ Returns a tuple of 11 bytes,
       ch = '_' returns (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255)
@@ -156,6 +157,7 @@ def bitmap_char(ch):
   """
   o = char_offset[ch]
   return font_11x44[o:o+11]
+
 
 def bitmap_text(text):
   """ returns a tuple of (buffer, length_in_byte_columns_aka_chars)
@@ -183,7 +185,7 @@ def bitmap_img(file):
       for bit in range(8):
         bit_val = 0
         x = 8*col+bit
-        if x < im.width && sum(im.getpixel( (x, row) )) > 384:
+        if x < im.width and sum(im.getpixel( (x, row) )) > 384:
           bit_val = 1 << (7-bit)
         byte_val += bit_val
       buf.append(byte_val)
@@ -207,18 +209,30 @@ proto_header = (
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 )
 
-def header(lengths):
+def header(lengths, speeds, modes):
   """ lengths[0] is the number of chars of the first text
   """
 
+  s = [int(x) for x in re.split(r'[\s,]+', speeds)]
+  s = s + [s[-1]]*(8-len(s))
+
+  m = [int(x) for x in re.split(r'[\s,]+', modes)]
+  m = m + [m[-1]]*(8-len(m))
+
   h = list(proto_header)
+  for i in range(8):
+    h[8+i] = 16*s[i] + m[i]
   for i in range(len(lengths)):
     h[17+2*i] = lengths[i]
+
   return h
 
-if len(sys.argv) < 2:
-  print("Usage:\n\n  %s Message1 [Message2 .. 8]\n" % (sys.argv[0]))
-  sys.exit(0)
+
+parser = argparse.ArgumentParser(description='%s Version %s -- upload messages to a 44x11 led badge via USB HID. https://github.com/jnweiger/led-badge-44x11' % (sys.argv[0], __version))
+parser.add_argument('-s', '--speed', default='4', help="Scroll speed. Up to 8 comma-seperated values (range 1..8)")
+parser.add_argument('-m', '--mode',  default='0', help="Up to 8 mode values: Scroll-left(0) -right(1) -up(2) -down(3); still-centered(4) -left(5); drop-down(6); curtain(7); laser(8)")
+parser.add_argument('message', nargs='+', help="Up to 8 message texts or image file names")
+args = parser.parse_args()
 
 dev = usb.core.find(idVendor=0x0416, idProduct=0x5020)
 if dev is None:
@@ -231,13 +245,12 @@ dev.set_configuration()
 print("using [%s %s] bus=%d dev=%d" % (dev.manufacturer, dev.product, dev.bus, dev.address))
 
 
-
 msgs = []
-for arg in sys.argv[1:]:
+for arg in args.message:
   msgs.append(bitmap(arg))
 
 buf = array.array('B')
-buf.extend(header(map(lambda x: x[1], msgs)))
+buf.extend(header(list(map(lambda x: x[1], msgs)), args.speed, args.mode))
 
 for msg in msgs:
   buf.extend(msg[0])

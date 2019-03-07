@@ -8,9 +8,17 @@
 #
 # Requires:
 #  sudo apt-get install python3-usb
+#
+# Optional for image support:
+#  sudo apt-get install python3-pil
+#
+# v0.1, 2019-03-05, jw  initial draught. HID code is much simpler than expected.
+# v0.2, 2019-03-07, jw  support for loading bitmaps added.
 
 import sys, os, array, time
 import usb.core
+
+__version = "0.2"
 
 font_11x44 = (
   # 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -141,13 +149,56 @@ char_offset = {}
 for i in range(len(charmap)):
   char_offset[charmap[i]] = 11 * i
 
-def bitmap(ch):
+def bitmap_char(ch):
   """ Returns a tuple of 11 bytes,
       ch = '_' returns (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255)
       The bits in each byte are horizontal, highest bit is left.
   """
   o = char_offset[ch]
   return font_11x44[o:o+11]
+
+def bitmap_text(text):
+  """ returns a tuple of (buffer, length_in_byte_columns_aka_chars)
+  """
+  buf = array.array('B')
+  for c in text:
+    buf.extend(bitmap_char(c))
+  return (buf, len(text))
+
+
+def bitmap_img(file):
+  """ returns a tuple of (buffer, length_in_byte_columns)
+  """
+  from PIL import Image
+
+  im = Image.open(file)
+  print("loading bitmap from file %s -> (%d x %d)" % (file, im.width, im.height))
+  if im.height != 11:
+    sys.exit("%s: image height must be 11px. Seen %d" % (file, im.height))
+  buf = array.array('B')
+  cols = int((im.width+7)/8)
+  for col in range(cols):
+    for row in range(11):
+      byte_val = 0
+      for bit in range(8):
+        bit_val = 0
+        x = 8*col+bit
+        if x < im.width && sum(im.getpixel( (x, row) )) > 384:
+          bit_val = 1 << (7-bit)
+        byte_val += bit_val
+      buf.append(byte_val)
+  im.close()
+  return (buf, cols)
+
+
+def bitmap(arg):
+  """ if arg is a valid and existing path name, we load it as an image.
+      Otherwise we take it as a string.
+  """
+  if os.path.exists(arg):
+    return bitmap_img(arg)
+  return bitmap_text(arg)
+
 
 proto_header = (
   0x77, 0x61, 0x6e, 0x67, 0x00, 0x00, 0x00, 0x00, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40,
@@ -156,12 +207,9 @@ proto_header = (
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 )
 
-def header(args):
-  """ len(args[0]) is the number of chars of the first text
+def header(lengths):
+  """ lengths[0] is the number of chars of the first text
   """
-  lengths = []
-  for l in range(len(args)):
-    lengths.append(len(args[l]))
 
   h = list(proto_header)
   for i in range(len(lengths)):
@@ -183,14 +231,16 @@ dev.set_configuration()
 print("using [%s %s] bus=%d dev=%d" % (dev.manufacturer, dev.product, dev.bus, dev.address))
 
 
-buf = array.array('B')
-buf.extend(header(sys.argv[1:]))
 
-for text in sys.argv[1:]:
-  # print(text)
-  for c in text:
-    # print(bitmap(c))
-    buf.extend(bitmap(c))
+msgs = []
+for arg in sys.argv[1:]:
+  msgs.append(bitmap(arg))
+
+buf = array.array('B')
+buf.extend(header(map(lambda x: x[1], msgs)))
+
+for msg in msgs:
+  buf.extend(msg[0])
 
 needpadding = len(buf)%64
 if needpadding:

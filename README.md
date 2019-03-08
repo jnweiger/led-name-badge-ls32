@@ -49,6 +49,8 @@ uses one builtin and one loaded image. The heart is builtin, and the fablab-logo
 
 shows a bicycle crossing the display in left-to-right and right-to-left (as a second message). If you select the 'M1-8' mode, the bike permanently runs back and forth the display. You may add a short message to one or both, to make it appear the bike is pulling the text around.
 
+![LED Mini Board](photos/bicycle.gif)
+
     python3 ./led-badge-11x44.py --list-names
 
 prints the list of builtin icon names, including :happy: :happy2: :heart: :HEART: :heart2: :HEART2: :fablab: :bicycle: :bicycle_r: :owncloud: ::
@@ -78,10 +80,6 @@ optional arguments:
   -m MODE, --mode MODE  Up to 8 mode values: Scroll-left(0) -right(1) -up(2)
                         -down(3); still-centered(4) -left(5); drop-down(6);
                         curtain(7); laser(8)
-  -p FILE, --preload FILE
-                        Load bitmap images. Use ^A, ^B, ^C, ... in text
-                        messages to make them visible. Deprecated, embed
-                        within ':' instead
   -l, --list, --list-names, --listnames
                         list named icons to be embedded in messages and exit
 

@@ -15,11 +15,12 @@
 # v0.1, 2019-03-05, jw  initial draught. HID code is much simpler than expected.
 # v0.2, 2019-03-07, jw  support for loading bitmaps added.
 # v0.3              jw  option -l to load graphics for inline use in text.
+# v0.4, 2019-03-08, jw  Warning about unused images added. Examples added to the README.
 
 import sys, os, re, array, time, argparse
 import usb.core
 
-__version = "0.3"
+__version = "0.4"
 
 font_11x44 = (
   # 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -151,13 +152,17 @@ for i in range(len(charmap)):
   char_offset[charmap[i]] = 11 * i
 
 bitmap_loaded = [ ([],0) ]
+bitmaps_unused = False
 
 def bitmap_char(ch):
   """ Returns a tuple of 11 bytes,
       ch = '_' returns (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255)
       The bits in each byte are horizontal, highest bit is left.
   """
-  if ord(ch) < 32: return bitmap_loaded[ord(ch)]
+  if ord(ch) < 32: 
+    global bitmaps_unused
+    bitmaps_unused = False
+    return bitmap_loaded[ord(ch)]
   o = char_offset[ch]
   return (font_11x44[o:o+11],1)
 
@@ -254,10 +259,14 @@ print("using [%s %s] bus=%d dev=%d" % (dev.manufacturer, dev.product, dev.bus, d
 if args.load:
   for file in args.load:
     bitmap_loaded.append(bitmap_img(file))
+    bitmaps_unused = True
 
 msgs = []
 for arg in args.message:
   msgs.append(bitmap(arg))
+
+if bitmaps_unused == True:
+  print("\nWARNING:\n Your preloaded images are not used.\n Try without '-l' or embed the control character '^A' in your message.\n")
 
 buf = array.array('B')
 buf.extend(header(list(map(lambda x: x[1], msgs)), args.speed, args.mode))

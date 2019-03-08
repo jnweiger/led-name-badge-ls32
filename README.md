@@ -1,7 +1,7 @@
 # Led-Badge-44x11
 Upload tool for an led name tag with USB-HID interface
 
-![LED Mini Board](green_badge.jpg)
+![LED Mini Board](photos/green_badge.jpg)
 
 ## Warning
 
@@ -34,11 +34,14 @@ loads the text 'Hello' as message one and 'World!' as message two. Note the diff
 
     sudo python3 ./led-badge-11x44.py -m 5 gfx/fablabnbg_logo_44x11.png
 
-loads a fullscreen still image.
+loads a fullscreen still image. (Or displays the pathname, if the image was not found. That is a hack. Sorry)
 
     sudo python3 ./led-badge-11x44.py -l gfx/heart.png -l gfx/fablab_logo_16x11.png  "I^Amy^Bfablab^B"
 
 preloads two images, a heart and a crude fablab logo as images 1 and two. The images can then be embedded in a message by using control characters. To enter the ^A control character on the shell, press CTRL-V followed by CTRL-A.
+
+![LED Mini Board](photos/love_my_fablab.jpg)
+
 
 <pre>
 Usage: led-badge-11x44.py [-h] [-s SPEED] [-m MODE] [-l FILE]

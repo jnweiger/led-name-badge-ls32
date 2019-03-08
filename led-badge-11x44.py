@@ -14,7 +14,7 @@
 #
 # v0.1, 2019-03-05, jw  initial draught. HID code is much simpler than expected.
 # v0.2, 2019-03-07, jw  support for loading bitmaps added.
-# v0.3              jw  option -l to load graphics for inline use in text.
+# v0.3              jw  option -p to preload graphics for inline use in text.
 # v0.4, 2019-03-08, jw  Warning about unused images added. Examples added to the README.
 
 import sys, os, re, array, time, argparse
@@ -151,7 +151,7 @@ char_offset = {}
 for i in range(len(charmap)):
   char_offset[charmap[i]] = 11 * i
 
-bitmap_loaded = [ ([],0) ]
+bitmap_preloaded = [ ([],0) ]
 bitmaps_unused = False
 
 def bitmap_char(ch):
@@ -159,10 +159,10 @@ def bitmap_char(ch):
       ch = '_' returns (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255)
       The bits in each byte are horizontal, highest bit is left.
   """
-  if ord(ch) < 32: 
+  if ord(ch) < 32:
     global bitmaps_unused
     bitmaps_unused = False
-    return bitmap_loaded[ord(ch)]
+    return bitmap_preloaded[ord(ch)]
   o = char_offset[ch]
   return (font_11x44[o:o+11],1)
 
@@ -185,7 +185,7 @@ def bitmap_img(file):
   from PIL import Image
 
   im = Image.open(file)
-  print("loading bitmap from file %s -> (%d x %d)" % (file, im.width, im.height))
+  print("preloading bitmap from file %s -> (%d x %d)" % (file, im.width, im.height))
   if im.height != 11:
     sys.exit("%s: image height must be 11px. Seen %d" % (file, im.height))
   buf = array.array('B')
@@ -239,11 +239,11 @@ def header(lengths, speeds, modes):
   return h
 
 
-parser = argparse.ArgumentParser(description='%s Version %s -- upload messages to a 44x11 led badge via USB HID. https://github.com/jnweiger/led-badge-44x11' % (sys.argv[0], __version))
+parser = argparse.ArgumentParser(description='Upload messages or graphics to a 44x11 led badge via USB HID. Version %s from https://github.com/jnweiger/led-badge-44x11 -- see there for more examples and for updates.' % __version, epilog="Example combining image and text (enter the ^A character as CTRL-V CTRL-A): sudo %s -p gfx/heart.png I^Ayou" % sys.argv[0])
 parser.add_argument('-s', '--speed', default='4', help="Scroll speed. Up to 8 comma-seperated values (range 1..8)")
 parser.add_argument('-m', '--mode',  default='0', help="Up to 8 mode values: Scroll-left(0) -right(1) -up(2) -down(3); still-centered(4) -left(5); drop-down(6); curtain(7); laser(8)")
-parser.add_argument('-l', '--load',  metavar='FILE', action='append', help="Bitmap images, made available as ^A, ^B, ^C, ... in text messages")
-parser.add_argument('message', nargs='+', help="Up to 8 message texts or image file names")
+parser.add_argument('-p', '--preload',  metavar='FILE', action='append', help="Load bitmap images. Use ^A, ^B, ^C, ... in text messages to make them visible")
+parser.add_argument('message', metavar='MSG_OR_FILENAME', nargs='+', help="Up to 8 message texts or image file names")
 args = parser.parse_args()
 
 dev = usb.core.find(idVendor=0x0416, idProduct=0x5020)
@@ -256,9 +256,9 @@ if dev.is_kernel_driver_active(0):
 dev.set_configuration()
 print("using [%s %s] bus=%d dev=%d" % (dev.manufacturer, dev.product, dev.bus, dev.address))
 
-if args.load:
-  for file in args.load:
-    bitmap_loaded.append(bitmap_img(file))
+if args.preload:
+  for file in args.preload:
+    bitmap_preloaded.append(bitmap_img(file))
     bitmaps_unused = True
 
 msgs = []
@@ -266,7 +266,7 @@ for arg in args.message:
   msgs.append(bitmap(arg))
 
 if bitmaps_unused == True:
-  print("\nWARNING:\n Your preloaded images are not used.\n Try without '-l' or embed the control character '^A' in your message.\n")
+  print("\nWARNING:\n Your preloaded images are not used.\n Try without '-p' or embed the control character '^A' in your message.\n")
 
 buf = array.array('B')
 buf.extend(header(list(map(lambda x: x[1], msgs)), args.speed, args.mode))

@@ -26,32 +26,39 @@ Required dependencies on Debian/Ubuntu Systems:
 
     sudo python3 ./led-badge-11x44.py "Hello World!"
 
-loads the text 'Hello World!' as the first message, and scrolls it from right to left (default scroll mode=0) and speed 4 (default). After each upload, press the little button next to the USB connector once to see the first message permanently. If you don't press the button, the device shows the message only once and returns to the charging screen. Sudo may or may not be needed, depending on your system.
+loads the text 'Hello World!' as the first message, and scrolls it from right to left (default scroll mode=0) and speed 4 (default). After an upload the device shows the first message once and returns to the charging screen if still connected to USB. Either pull the plug or press the small button next to the USB connector.
+
+Sudo may or may not be needed, depending on your system.
 
     sudo python3 ./led-badge-11x44.py -m 6 -s 8 Hello World!
 
-loads the text 'Hello' as message one and 'World!' as message two. Note the diffrence in quoting. Up to 8 messages can be uploaded. This example uses mode 6, which is dromps the words with a nice little animation vertically into the display area. Speed is set to maximum here, so that the animation is very smooth. Per default you will only see 'Hello'. To get both messages alternating, press the little button next to the USB connector two more times, so that the message 'M1-8' appears. Now the display loops through all uploaded messages.
+loads the text 'Hello' as message one and 'World!' as message two. Note the diffrence in quoting. Up to 8 messages can be uploaded. This example uses mode 6, which is dromps the words with a nice little animation vertically into the display area. Speed is set to maximum here, so that the animation is very smooth. Per default you will only see 'Hello'.
+To see all messages, press the small button next to the USB connector multiple times, until you briefly see 'M1-8'. Now the display loops through all uploaded messages.
 
     sudo python3 ./led-badge-11x44.py -m 5 gfx/fablabnbg_logo_44x11.png
 
 loads a fullscreen still image. (Or displays the pathname, if the image was not found. That is a hack. Sorry)
 
-    sudo python3 ./led-badge-11x44.py -l gfx/heart.png -l gfx/fablab_logo_16x11.png  "I^Amy^Bfablab^B"
+    sudo python3 ./led-badge-11x44.py -p gfx/heart.png -p gfx/fablab_logo_16x11.png  "I^Amy^Bfablab^B"
 
 preloads two images, a heart and a crude fablab logo as images 1 and two. The images can then be embedded in a message by using control characters. To enter the ^A control character on the shell, press CTRL-V followed by CTRL-A.
 
 ![LED Mini Board](photos/love_my_fablab.jpg)
 
+    python3 ./led-badge-11x44.py --help
+
+prints some condensed help:
 
 <pre>
-Usage: led-badge-11x44.py [-h] [-s SPEED] [-m MODE] [-l FILE]
-                          message [message ...]
+Usage: led-badge-11x44.py [-h] [-s SPEED] [-m MODE] [-p FILE]
+                          MSG_OR_FILENAME [MSG_OR_FILENAME ...]
 
-./led-badge-11x44.py Version 0.3 -- upload messages to a 44x11 led badge via
-USB HID. https://github.com/jnweiger/led-badge-44x11
+Upload messages or graphics to a 44x11 led badge via USB HID. Version 0.4 from
+https://github.com/jnweiger/led-badge-44x11 -- see there for more examples and
+for updates.
 
 positional arguments:
-  message               Up to 8 message texts or image file names
+  MSG_OR_FILENAME       Up to 8 message texts or image file names
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -61,8 +68,13 @@ optional arguments:
   -m MODE, --mode MODE  Up to 8 mode values: Scroll-left(0) -right(1) -up(2)
                         -down(3); still-centered(4) -left(5); drop-down(6);
                         curtain(7); laser(8)
-  -l FILE, --load FILE  Bitmap images, made available as ^A, ^B, ^C, ... in
-                        text messages
+  -p FILE, --preload FILE
+                        Load bitmap images. Use ^A, ^B, ^C, ... in text
+                        messages to make them visible
+
+Example combining image and text (enter the ^A character as CTRL-V CTRL-A):
+sudo ./led-badge-11x44.py -p gfx/heart.png I^Ayou
+
 
 </pre>
 

@@ -17,7 +17,8 @@
 # v0.3              jw  option -p to preload graphics for inline use in text.
 # v0.4, 2019-03-08, jw  Warning about unused images added. Examples added to the README.
 
-import sys, os, re, array, time, argparse
+import sys, os, re, time, argparse
+from array import array
 import usb.core
 
 __version = "0.4"
@@ -152,7 +153,30 @@ for i in range(len(charmap)):
   char_offset[charmap[i]] = 11 * i
 
 bitmap_preloaded = [ ([],0) ]
-bitmaps_unused = False
+bitmaps_preloaded_unused = False
+
+bitmap_named = {
+  'happy':    (array('B', (0x00, 0x3c, 0x42, 0xa5, 0x81, 0xa5, 0x99, 0x42, 0x3c, 0x00, 0x00)), 1, '\x1d'),
+  'happy2':   (array('B', (0x00, 0x08, 0x14, 0x08, 0x01, 0x00, 0x00, 0x61, 0x30, 0x1c, 0x07,
+                           0x00, 0x20, 0x50, 0x20, 0x00, 0x80, 0x80, 0x86, 0x0c, 0x38, 0xe0)), 2, '\x1c'),
+  'heart':    (array('B', (0x00, 0x00, 0x6c, 0x92, 0x82, 0x82, 0x44, 0x28, 0x10, 0x00, 0x00)), 1, '\x1b'),
+  'HEART':    (array('B', (0x00, 0x00, 0x6c, 0xfe, 0xfe, 0xfe, 0x7c, 0x38, 0x10, 0x00, 0x00)), 1, '\x1a'),
+  'heart2':   (array('B', (0x00, 0x0c, 0x12, 0x21, 0x20, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01,
+                           0x00, 0x60, 0x90, 0x08, 0x08, 0x08, 0x10, 0x20, 0x40, 0x80, 0x00)), 2, '\x19'),
+  'HEART2':   (array('B', (0x00, 0x0c, 0x1e, 0x3f, 0x3f, 0x3f, 0x1f, 0x0f, 0x07, 0x03, 0x01,
+                           0x00, 0x60, 0xf0, 0xf8, 0xf8, 0xf8, 0xf0, 0xe0, 0xc0, 0x80, 0x00)), 2, '\x18'),
+  'fablab':   (array('B', (0x07, 0x0e, 0x1b, 0x03, 0x21, 0x2c, 0x2e, 0x26, 0x14, 0x1c, 0x06,
+                           0x80, 0x60, 0x30, 0x80, 0x88, 0x38, 0xe8, 0xc8, 0x10, 0x30, 0xc0)), 2, '\x17'),
+  'bicycle':  (array('B', (0x01, 0x02, 0x00, 0x01, 0x07, 0x09, 0x12, 0x12, 0x10, 0x08, 0x07,
+                           0x00, 0x87, 0x81, 0x5f, 0x22, 0x94, 0x49, 0x5f, 0x49, 0x80, 0x00,
+                           0x00, 0x80, 0x00, 0x80, 0x70, 0xc8, 0x24, 0xe4, 0x04, 0x88, 0x70)), 3, '\x16'),
+  'owncloud': (array('B', (0x00, 0x01, 0x02, 0x03, 0x06, 0x0c, 0x1a, 0x13, 0x11, 0x19, 0x0f,
+                           0x78, 0xcc, 0x87, 0xfc, 0x42, 0x81, 0x81, 0x81, 0x81, 0x43, 0xbd,
+                           0x00, 0x00, 0x00, 0x80, 0x80, 0xe0, 0x30, 0x10, 0x28, 0x28, 0xd0)), 3, '\x15'),
+}
+bitmap_builtin = {}
+for i in bitmap_named:
+  bitmap_builtin[bitmap_named[i][0]] = bitmap_named[i]
 
 def bitmap_char(ch):
   """ Returns a tuple of 11 bytes,
@@ -160,17 +184,36 @@ def bitmap_char(ch):
       The bits in each byte are horizontal, highest bit is left.
   """
   if ord(ch) < 32:
-    global bitmaps_unused
-    bitmaps_unused = False
+    if ch in bitmap_builtin:
+      return bitmap_builtin[ch]
+
+    global bitmaps_preloaded_unused
+    bitmaps_preloaded_unused = False
     return bitmap_preloaded[ord(ch)]
+
   o = char_offset[ch]
   return (font_11x44[o:o+11],1)
 
 
 def bitmap_text(text):
   """ returns a tuple of (buffer, length_in_byte_columns_aka_chars)
+      We preprocess the text string for substitution patterns
+      "::" is replaced with a single ":"
+      ":happy:" is replaced with a reference to a builtin smiley glyph
+      ":heart:" is replaced with a reference to a builtin heart glyph
+      ":gfx/logo.png:" preloads the file gfx/logo.png and is replaced the corresponding control char.
   """
-  buf = array.array('B')
+  def colonrepl(m):
+    name = m.group(1)
+    if name == '': return ':'
+    if '.' in name:
+      bitmap_preloaded.append(bitmap_img(name))
+      return chr(len(bitmap_preloaded)-1)
+    b = bitmap_named[name]
+    return b[2]
+
+  text = re.sub(r':([^:]*):', colonrepl, text)
+  buf = array('B')
   cols = 0
   for c in text:
     (b,n) = bitmap_char(c)
@@ -185,10 +228,10 @@ def bitmap_img(file):
   from PIL import Image
 
   im = Image.open(file)
-  print("preloading bitmap from file %s -> (%d x %d)" % (file, im.width, im.height))
+  print("fetching bitmap from file %s -> (%d x %d)" % (file, im.width, im.height))
   if im.height != 11:
     sys.exit("%s: image height must be 11px. Seen %d" % (file, im.height))
-  buf = array.array('B')
+  buf = array('B')
   cols = int((im.width+7)/8)
   for col in range(cols):
     for row in range(11):
@@ -259,16 +302,16 @@ print("using [%s %s] bus=%d dev=%d" % (dev.manufacturer, dev.product, dev.bus, d
 if args.preload:
   for file in args.preload:
     bitmap_preloaded.append(bitmap_img(file))
-    bitmaps_unused = True
+    bitmaps_preloaded_unused = True
 
 msgs = []
 for arg in args.message:
   msgs.append(bitmap(arg))
 
-if bitmaps_unused == True:
+if bitmaps_preloaded_unused == True:
   print("\nWARNING:\n Your preloaded images are not used.\n Try without '-p' or embed the control character '^A' in your message.\n")
 
-buf = array.array('B')
+buf = array('B')
 buf.extend(header(list(map(lambda x: x[1], msgs)), args.speed, args.mode))
 
 for msg in msgs:

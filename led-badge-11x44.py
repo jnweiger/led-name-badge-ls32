@@ -16,12 +16,14 @@
 # v0.2, 2019-03-07, jw  support for loading bitmaps added.
 # v0.3              jw  option -p to preload graphics for inline use in text.
 # v0.4, 2019-03-08, jw  Warning about unused images added. Examples added to the README.
+# v0.5,             jw  Deprecated -p and CTRL-characters. We now use embedding within colons(:)
+#                       Added builtin icons and -l to list them.
 
 import sys, os, re, time, argparse
 from array import array
 import usb.core
 
-__version = "0.4"
+__version = "0.5"
 
 font_11x44 = (
   # 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -156,7 +158,7 @@ bitmap_preloaded = [ ([],0) ]
 bitmaps_preloaded_unused = False
 
 bitmap_named = {
-  'happy':    (array('B', (0x00, 0x3c, 0x42, 0xa5, 0x81, 0xa5, 0x99, 0x42, 0x3c, 0x00, 0x00)), 1, '\x1d'),
+  'happy':    (array('B', (0x00, 0x00, 0x3c, 0x42, 0xa5, 0x81, 0xa5, 0x99, 0x42, 0x3c, 0x00)), 1, '\x1d'),
   'happy2':   (array('B', (0x00, 0x08, 0x14, 0x08, 0x01, 0x00, 0x00, 0x61, 0x30, 0x1c, 0x07,
                            0x00, 0x20, 0x50, 0x20, 0x00, 0x80, 0x80, 0x86, 0x0c, 0x38, 0xe0)), 2, '\x1c'),
   'heart':    (array('B', (0x00, 0x00, 0x6c, 0x92, 0x82, 0x82, 0x44, 0x28, 0x10, 0x00, 0x00)), 1, '\x1b'),
@@ -170,13 +172,16 @@ bitmap_named = {
   'bicycle':  (array('B', (0x01, 0x02, 0x00, 0x01, 0x07, 0x09, 0x12, 0x12, 0x10, 0x08, 0x07,
                            0x00, 0x87, 0x81, 0x5f, 0x22, 0x94, 0x49, 0x5f, 0x49, 0x80, 0x00,
                            0x00, 0x80, 0x00, 0x80, 0x70, 0xc8, 0x24, 0xe4, 0x04, 0x88, 0x70)), 3, '\x16'),
+  'bicycle_r':(array('B', (0x00, 0x00, 0x00, 0x00, 0x07, 0x09, 0x12, 0x13, 0x10, 0x08, 0x07,
+                           0x00, 0xf0, 0x40, 0xfd, 0x22, 0x94, 0x49, 0xfd, 0x49, 0x80, 0x00,
+                           0x40, 0xa0, 0x80, 0x40, 0x70, 0xc8, 0x24, 0x24, 0x04, 0x88, 0x70)), 3, '\x15'),
   'owncloud': (array('B', (0x00, 0x01, 0x02, 0x03, 0x06, 0x0c, 0x1a, 0x13, 0x11, 0x19, 0x0f,
                            0x78, 0xcc, 0x87, 0xfc, 0x42, 0x81, 0x81, 0x81, 0x81, 0x43, 0xbd,
-                           0x00, 0x00, 0x00, 0x80, 0x80, 0xe0, 0x30, 0x10, 0x28, 0x28, 0xd0)), 3, '\x15'),
+                           0x00, 0x00, 0x00, 0x80, 0x80, 0xe0, 0x30, 0x10, 0x28, 0x28, 0xd0)), 3, '\x14'),
 }
 bitmap_builtin = {}
 for i in bitmap_named:
-  bitmap_builtin[bitmap_named[i][0]] = bitmap_named[i]
+  bitmap_builtin[bitmap_named[i][2]] = bitmap_named[i]
 
 def bitmap_char(ch):
   """ Returns a tuple of 11 bytes,
@@ -185,7 +190,7 @@ def bitmap_char(ch):
   """
   if ord(ch) < 32:
     if ch in bitmap_builtin:
-      return bitmap_builtin[ch]
+      return bitmap_builtin[ch][:2]
 
     global bitmaps_preloaded_unused
     bitmaps_preloaded_unused = False
@@ -199,13 +204,17 @@ def bitmap_text(text):
   """ returns a tuple of (buffer, length_in_byte_columns_aka_chars)
       We preprocess the text string for substitution patterns
       "::" is replaced with a single ":"
+      ":1: is replaced with CTRL-A referencing the first preloaded or loaded image.
       ":happy:" is replaced with a reference to a builtin smiley glyph
       ":heart:" is replaced with a reference to a builtin heart glyph
       ":gfx/logo.png:" preloads the file gfx/logo.png and is replaced the corresponding control char.
   """
   def colonrepl(m):
     name = m.group(1)
-    if name == '': return ':'
+    if name == '':
+       return ':'
+    if name.isdecimal():
+      return chr(int(name))
     if '.' in name:
       bitmap_preloaded.append(bitmap_img(name))
       return chr(len(bitmap_preloaded)-1)
@@ -282,11 +291,12 @@ def header(lengths, speeds, modes):
   return h
 
 
-parser = argparse.ArgumentParser(description='Upload messages or graphics to a 44x11 led badge via USB HID. Version %s from https://github.com/jnweiger/led-badge-44x11 -- see there for more examples and for updates.' % __version, epilog="Example combining image and text (enter the ^A character as CTRL-V CTRL-A): sudo %s -p gfx/heart.png I^Ayou" % sys.argv[0])
+parser = argparse.ArgumentParser(description='Upload messages or graphics to a 44x11 led badge via USB HID. Version %s from https://github.com/jnweiger/led-badge-44x11 -- see there for more examples and for updates.' % __version, epilog='Example combining image and text: sudo %s "I:HEART2:you"' % sys.argv[0])
 parser.add_argument('-s', '--speed', default='4', help="Scroll speed. Up to 8 comma-seperated values (range 1..8)")
 parser.add_argument('-m', '--mode',  default='0', help="Up to 8 mode values: Scroll-left(0) -right(1) -up(2) -down(3); still-centered(4) -left(5); drop-down(6); curtain(7); laser(8)")
-parser.add_argument('-p', '--preload',  metavar='FILE', action='append', help="Load bitmap images. Use ^A, ^B, ^C, ... in text messages to make them visible")
-parser.add_argument('message', metavar='MSG_OR_FILENAME', nargs='+', help="Up to 8 message texts or image file names")
+parser.add_argument('-p', '--preload',  metavar='FILE', action='append', help="Load bitmap images. Use ^A, ^B, ^C, ... in text messages to make them visible. Deprecated, embed within ':' instead")
+parser.add_argument('-l', '--list-names', action='version', help="list named icons to be embedded in messages and exit", version=':'+':  :'.join(bitmap_named.keys())+':  ::  or e.g. :path/to/some_icon.png:')
+parser.add_argument('message', metavar='MESSAGE', nargs='+', help="Up to 8 message texts with embedded builtin icons or loaded images within colons(:) -- See -l for a list of builtins")
 args = parser.parse_args()
 
 dev = usb.core.find(idVendor=0x0416, idProduct=0x5020)

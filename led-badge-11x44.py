@@ -18,12 +18,14 @@
 # v0.4, 2019-03-08, jw  Warning about unused images added. Examples added to the README.
 # v0.5,             jw  Deprecated -p and CTRL-characters. We now use embedding within colons(:)
 #                       Added builtin icons and -l to list them.
+# v0.6, 2019-03-14, jw  Added --mode-help with hints and example for making animations.
+#                       Options -b --blink, -a --ants added. Removed -p from usage.
 
 import sys, os, re, time, argparse
 from array import array
 import usb.core
 
-__version = "0.5"
+__version = "0.6"
 
 font_11x44 = (
   # 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -272,31 +274,66 @@ proto_header = (
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 )
 
-def header(lengths, speeds, modes):
+def header(lengths, speeds, modes, blink, ants):
   """ lengths[0] is the number of chars of the first text
+      
+      Speeds come in as 1..8, but are needed 0..7 here.
   """
+  a = [int(x) for x in re.split(r'[\s,]+', ants)]
+  a = a + [a[-1]]*(8-len(a))    # repeat last element
 
-  s = [int(x) for x in re.split(r'[\s,]+', speeds)]
-  s = s + [s[-1]]*(8-len(s))
+  b = [int(x) for x in re.split(r'[\s,]+', blink)]
+  b = b + [b[-1]]*(8-len(b))    # repeat last element
+
+  s = [int(x)-1 for x in re.split(r'[\s,]+', speeds)]
+  s = s + [s[-1]]*(8-len(s))    # repeat last element
 
   m = [int(x) for x in re.split(r'[\s,]+', modes)]
-  m = m + [m[-1]]*(8-len(m))
+  m = m + [m[-1]]*(8-len(m))    # repeat last element
 
   h = list(proto_header)
   for i in range(8):
+    h[6] += b[i]<<i
+    h[7] += a[i]<<i
+
+  for i in range(8):
     h[8+i] = 16*s[i] + m[i]
+
   for i in range(len(lengths)):
     h[17+2*i] = lengths[i]
 
   return h
 
 
-parser = argparse.ArgumentParser(description='Upload messages or graphics to a 44x11 led badge via USB HID. Version %s from https://github.com/jnweiger/led-badge-44x11 -- see there for more examples and for updates.' % __version, epilog='Example combining image and text: sudo %s "I:HEART2:you"' % sys.argv[0])
-parser.add_argument('-s', '--speed', default='4', help="Scroll speed. Up to 8 comma-seperated values (range 1..8)")
-parser.add_argument('-m', '--mode',  default='0', help="Up to 8 mode values: Scroll-left(0) -right(1) -up(2) -down(3); still-centered(4) -left(5); drop-down(6); curtain(7); laser(8)")
-parser.add_argument('-p', '--preload',  metavar='FILE', action='append', help="Load bitmap images. Use ^A, ^B, ^C, ... in text messages to make them visible. Deprecated, embed within ':' instead")
+parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, description='Upload messages or graphics to a 44x11 led badge via USB HID.\nVersion %s from https://github.com/jnweiger/led-badge-44x11\n -- see there for more examples and for updates.' % __version, epilog='Example combining image and text:\n sudo %s "I:HEART2:you"' % sys.argv[0])
+parser.add_argument('-s', '--speed', default='4', help="Scroll speed (Range 1..8). Up to 8 comma-seperated values")
+parser.add_argument('-m', '--mode',  default='0', help="Up to 8 mode values: Scroll-left(0) -right(1) -up(2) -down(3); still-centered(4); animation(5); drop-down(6); curtain(7); laser(8); See '--mode-help' for more details.")
+parser.add_argument('-b', '--blink', default='0', help="1: blinking, 0: normal. Up to 8 comma-seperated values")
+parser.add_argument('-a', '--ants',  default='0', help="1: animated border, 0: normal. Up to 8 comma-seperated values")
+parser.add_argument('-p', '--preload',  metavar='FILE', action='append', help=argparse.SUPPRESS)       # "Load bitmap images. Use ^A, ^B, ^C, ... in text messages to make them visible. Deprecated, embed within ':' instead")
 parser.add_argument('-l', '--list-names', action='version', help="list named icons to be embedded in messages and exit", version=':'+':  :'.join(bitmap_named.keys())+':  ::  or e.g. :path/to/some_icon.png:')
 parser.add_argument('message', metavar='MESSAGE', nargs='+', help="Up to 8 message texts with embedded builtin icons or loaded images within colons(:) -- See -l for a list of builtins")
+parser.add_argument('--mode-help', action='version', help=argparse.SUPPRESS, version="""
+
+-m 5 "Animation"
+
+ Animation frames are 6 character (or 48px) wide. Upload an animation of 
+ N frames as one image N*48 pixels wide, 11 pixels high.
+ Frames run from left to right and repeat endless.
+ Speed [1..8] result in ca. [1.2 1.3 2.0 2.4 2.8 4.5 7.5 15] fps.
+
+ Example of a slowly beating heart:
+  sudo %s -s1 -m5 "  :heart2:    :HEART2:"
+
+-m 9 "Smoth"
+-m 10 "Rotate"
+ 
+ These modes are mentioned in the BMP Badge software.
+ Text is shown static, or sometimes (longer texts?) not shown at all.
+ One significant difference is: The text of the fist message stays visible after
+ upload, even if the USB cable remains connected.
+ (No "rotation" or "smothering"(?) effect can be expected, though)
+""" % sys.argv[0])
 args = parser.parse_args()
 
 dev = usb.core.find(idVendor=0x0416, idProduct=0x5020)
@@ -322,7 +359,7 @@ if bitmaps_preloaded_unused == True:
   print("\nWARNING:\n Your preloaded images are not used.\n Try without '-p' or embed the control character '^A' in your message.\n")
 
 buf = array('B')
-buf.extend(header(list(map(lambda x: x[1], msgs)), args.speed, args.mode))
+buf.extend(header(list(map(lambda x: x[1], msgs)), args.speed, args.mode, args.blink, args.ants))
 
 for msg in msgs:
   buf.extend(msg[0])

@@ -51,6 +51,10 @@ shows a bicycle crossing the display in left-to-right and right-to-left (as a se
 
 ![LED Mini Board](photos/bicycle.gif)
 
+    sudo python3. /led-badge-11-x44.py -b0,1 -s1 -m5 "  :heart2:    :HEART2:" "  :HEART2:"
+
+shows a simple animation of a slowly beating heart on the first message, and a blinking heart on the second message.
+
     python3 ./led-badge-11x44.py --list-names
 
 prints the list of builtin icon names, including :happy: :happy2: :heart: :HEART: :heart2: :HEART2: :fablab: :bicycle: :bicycle_r: :owncloud: ::
@@ -60,12 +64,13 @@ prints the list of builtin icon names, including :happy: :happy2: :heart: :HEART
 prints some condensed help:
 
 <pre>
-Usage: led-badge-11x44.py [-h] [-s SPEED] [-m MODE] [-p FILE] [-l]
+usage: led-badge-11x44.py [-h] [-s SPEED] [-m MODE] [-b BLINK] [-a ANTS]
+                          [-p FILE] [-l]
                           MESSAGE [MESSAGE ...]
 
-Upload messages or graphics to a 44x11 led badge via USB HID. Version 0.5 from
-https://github.com/jnweiger/led-badge-44x11 -- see there for more examples and
-for updates.
+Upload messages or graphics to a 44x11 led badge via USB HID.
+Version 0.6 from https://github.com/jnweiger/led-badge-44x11
+ -- see there for more examples and for updates.
 
 positional arguments:
   MESSAGE               Up to 8 message texts with embedded builtin icons or
@@ -75,15 +80,20 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   -s SPEED, --speed SPEED
-                        Scroll speed. Up to 8 comma-seperated values (range
-                        1..8)
+                        Scroll speed (Range 1..8). Up to 8 comma-seperated
+                        values
   -m MODE, --mode MODE  Up to 8 mode values: Scroll-left(0) -right(1) -up(2)
-                        -down(3); still-centered(4) -left(5); drop-down(6);
-                        curtain(7); laser(8)
-  -l, --list, --list-names, --listnames
-                        list named icons to be embedded in messages and exit
+                        -down(3); still-centered(4); animation(5); drop-
+                        down(6); curtain(7); laser(8); See '--mode-help' for
+                        more details.
+  -b BLINK, --blink BLINK
+                        1: blinking, 0: normal. Up to 8 comma-seperated values
+  -a ANTS, --ants ANTS  1: animated border, 0: normal. Up to 8 comma-seperated
+                        values
+  -l, --list-names      list named icons to be embedded in messages and exit
 
-Example combining image and text: sudo ./led-badge-11x44.py "I:HEART2:you"
+Example combining image and text:
+ sudo ./led-badge-11x44.py "I:HEART2:you"
 </pre>
 
 

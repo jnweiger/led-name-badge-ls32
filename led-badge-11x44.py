@@ -23,7 +23,10 @@
 
 import sys, os, re, time, argparse
 from array import array
-import usb.core
+if sys.platform == "darwin":
+  import pyhidapi
+else:
+  import usb.core
 
 __version = "0.6"
 
@@ -335,16 +338,23 @@ parser.add_argument('--mode-help', action='version', help=argparse.SUPPRESS, ver
  (No "rotation" or "smothering"(?) effect can be expected, though)
 """ % sys.argv[0])
 args = parser.parse_args()
+if sys.platform == "darwin":
+  pyhidapi.hid_init()
+  dev = pyhidapi.hid_open(0x0416, 0x5020)
+else:
+  dev = usb.core.find(idVendor=0x0416, idProduct=0x5020)
 
-dev = usb.core.find(idVendor=0x0416, idProduct=0x5020)
-if dev is None:
-  print("No led tag with vendorID 0x0416 and productID 0x5020 found.")
-  print("Connect the led tag and run this tool as root.")
-  sys.exit(1)
-if dev.is_kernel_driver_active(0):
-  dev.detach_kernel_driver(0)
-dev.set_configuration()
-print("using [%s %s] bus=%d dev=%d" % (dev.manufacturer, dev.product, dev.bus, dev.address))
+if sys.platform == "darwin":
+  print("using pyhidapi")
+else:
+  if dev is None:
+    print("No led tag with vendorID 0x0416 and productID 0x5020 found.")
+    print("Connect the led tag and run this tool as root.")
+    sys.exit(1)
+  if dev.is_kernel_driver_active(0):
+    dev.detach_kernel_driver(0)
+  dev.set_configuration()
+  print("using [%s %s] bus=%d dev=%d" % (dev.manufacturer, dev.product, dev.bus, dev.address))
 
 if args.preload:
   for file in args.preload:
@@ -371,5 +381,8 @@ if needpadding:
 # print(buf)
 for i in range(int(len(buf)/64)):
   time.sleep(0.1)
-  dev.write(1, buf[i*64:i*64+64])
+  if sys.platform == "darwin":
+    pyhidapi.hid_write(dev, buf[i*64:i*64+64])
+  else:
+    dev.write(1, buf[i*64:i*64+64])
 

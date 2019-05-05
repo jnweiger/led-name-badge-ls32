@@ -340,12 +340,19 @@ parser.add_argument('--mode-help', action='version', help=argparse.SUPPRESS, ver
 args = parser.parse_args()
 if sys.platform == "darwin":
   pyhidapi.hid_init()
-  dev = pyhidapi.hid_open(0x0416, 0x5020)
+  devinfo = pyhidapi.hid_enumerate(0x0416, 0x5020)
+  #dev = pyhidapi.hid_open(0x0416, 0x5020)
 else:
   dev = usb.core.find(idVendor=0x0416, idProduct=0x5020)
 
 if sys.platform == "darwin":
-  print("using pyhidapi")
+  if devinfo:
+    dev = pyhidapi.hid_open_path(devinfo[0].path)
+    print("using [%s %s] int=%d page=%s via HIDAPI" % (devinfo[0].manufacturer_string, devinfo[0].product_string, devinfo[0].interface_number, devinfo[0].usage_page))
+  else:
+    print("No led tag with vendorID 0x0416 and productID 0x5020 found.")
+    print("Connect the led tag and run this tool as root.")
+    sys.exit(1)
 else:
   if dev is None:
     print("No led tag with vendorID 0x0416 and productID 0x5020 found.")
@@ -385,4 +392,7 @@ for i in range(int(len(buf)/64)):
     pyhidapi.hid_write(dev, buf[i*64:i*64+64])
   else:
     dev.write(1, buf[i*64:i*64+64])
+
+if sys.platform == "darwin":
+  pyhidapi.hid_close(dev)
 

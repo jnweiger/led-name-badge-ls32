@@ -20,6 +20,12 @@ identifies itself on the USB as
 Required dependencies on Debian/Ubuntu Systems:
 
     sudo apt install python3-usb
+    
+Required dependencies on Mac Systems:
+
+    pip install pyhidapi
+    brew install hidapi
+    
 
 #### Examples:
 

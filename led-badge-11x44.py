@@ -163,6 +163,20 @@ bitmap_preloaded = [ ([],0) ]
 bitmaps_preloaded_unused = False
 
 bitmap_named = {
+  'ball':    (array('B', (
+    0b00000000,
+    0b00000000,
+    0b00000000,
+    0b00000000,
+    0b00111100,
+    0b11111111,
+    0b11111111,
+    0b00111100,
+    0b00000000,
+    0b00000000,
+    0b00000000,
+    0b00000000
+    )), 1, '\x1e'),
   'happy':    (array('B', (0x00, 0x00, 0x3c, 0x42, 0xa5, 0x81, 0xa5, 0x99, 0x42, 0x3c, 0x00)), 1, '\x1d'),
   'happy2':   (array('B', (0x00, 0x08, 0x14, 0x08, 0x01, 0x00, 0x00, 0x61, 0x30, 0x1c, 0x07,
                            0x00, 0x20, 0x50, 0x20, 0x00, 0x80, 0x80, 0x86, 0x0c, 0x38, 0xe0)), 2, '\x1c'),
@@ -279,7 +293,7 @@ proto_header = (
 
 def header(lengths, speeds, modes, blink, ants):
   """ lengths[0] is the number of chars of the first text
-      
+
       Speeds come in as 1..8, but are needed 0..7 here.
   """
   a = [int(x) for x in re.split(r'[\s,]+', ants)]
@@ -320,7 +334,7 @@ parser.add_argument('--mode-help', action='version', help=argparse.SUPPRESS, ver
 
 -m 5 "Animation"
 
- Animation frames are 6 character (or 48px) wide. Upload an animation of 
+ Animation frames are 6 character (or 48px) wide. Upload an animation of
  N frames as one image N*48 pixels wide, 11 pixels high.
  Frames run from left to right and repeat endless.
  Speed [1..8] result in ca. [1.2 1.3 2.0 2.4 2.8 4.5 7.5 15] fps.
@@ -330,7 +344,7 @@ parser.add_argument('--mode-help', action='version', help=argparse.SUPPRESS, ver
 
 -m 9 "Smoth"
 -m 10 "Rotate"
- 
+
  These modes are mentioned in the BMP Badge software.
  Text is shown static, or sometimes (longer texts?) not shown at all.
  One significant difference is: The text of the fist message stays visible after
@@ -395,4 +409,3 @@ for i in range(int(len(buf)/64)):
 
 if sys.platform == "darwin":
   pyhidapi.hid_close(dev)
-

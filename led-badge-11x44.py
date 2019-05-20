@@ -21,12 +21,12 @@
 #                       Added builtin icons and -l to list them.
 # v0.6, 2019-03-14, jw  Added --mode-help with hints and example for making animations.
 #                       Options -b --blink, -a --ants added. Removed -p from usage.
-# v0.7, 2019-05-20, jw  Support pyhidapi, fallback to usb.core.
+# v0.7, 2019-05-20, jw  Support pyhidapi, fallback to usb.core. Added python2 compatibility.
 
 import sys, os, re, time, argparse
 from array import array
 try:
-  import xpyhidapi
+  import pyhidapi
   have_pyhidapi = True
 except:
   have_pyhidapi = False
@@ -265,7 +265,7 @@ def bitmap_text(text):
     name = m.group(1)
     if name == '':
        return ':'
-    if name.isdecimal():
+    if re.match('^[0-9]*$', name):      # py3 name.isdecimal()
       return chr(int(name))
     if '.' in name:
       bitmap_preloaded.append(bitmap_img(name))

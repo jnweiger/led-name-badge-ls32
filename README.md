@@ -19,6 +19,10 @@ identifies itself on the USB as
 
 Required dependencies on Debian/Ubuntu Systems:
 
+    sudo pip install pyhidapi
+    sudo apt-get install libhidapi-hidraw0
+    sudo ln -s /usr/lib/x86_64-linux-gnu/libhidapi-hidraw.so.0  /usr/local/lib/
+  or
     sudo apt install python3-usb
     
 Required dependencies on Mac Systems:

@@ -1,4 +1,5 @@
 #! /usr/bin/python3
+# -*- encoding: utf-8 -*-
 #
 # (C) 2019 juergen@fabmail.org
 #
@@ -20,15 +21,36 @@
 #                       Added builtin icons and -l to list them.
 # v0.6, 2019-03-14, jw  Added --mode-help with hints and example for making animations.
 #                       Options -b --blink, -a --ants added. Removed -p from usage.
+# v0.7, 2019-05-20, jw  Support pyhidapi, fallback to usb.core.
 
 import sys, os, re, time, argparse
 from array import array
-if sys.platform == "darwin":
-  import pyhidapi
-else:
-  import usb.core
+try:
+  import xpyhidapi
+  have_pyhidapi = True
+except:
+  have_pyhidapi = False
+  try:
+    import usb.core
+  except:
+    print("ERROR: Need the pyhidapi or usb.core module.")
+    if sys.platform == "darwin":
+      print("""Please try
+  pip install pyhidapi
+  brew install hidapi""")
+    elif sys.platform == "linux":
+      print("""Please try
+  sudo pip install pyhidapi
+  sudo apt-get install libhidapi-hidraw0
+  sudo ln -s /usr/lib/x86_64-linux-gnu/libhidapi-hidraw.so.0  /usr/local/lib/
+or
+  sudo apt-get install python3-usb""")
+    else:       # windows?
+      print("""Please with Linux or MacOS or help us implement support for """ + sys.platform)
+    sys.exit(1)
 
-__version = "0.6"
+
+__version = "0.7"
 
 font_11x44 = (
   # 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -164,20 +186,31 @@ bitmaps_preloaded_unused = False
 
 bitmap_named = {
   'ball':    (array('B', (
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00111100,
-    0b11111111,
-    0b11111111,
-    0b00111100,
-    0b00000000,
-    0b00000000,
-    0b00000000,
-    0b00000000
-    )), 1, '\x1e'),
-  'happy':    (array('B', (0x00, 0x00, 0x3c, 0x42, 0xa5, 0x81, 0xa5, 0x99, 0x42, 0x3c, 0x00)), 1, '\x1d'),
+                0b00000000,
+                0b00000000,
+                0b00111100,
+                0b01111110,
+                0b11111111,
+                0b11111111,
+                0b11111111,
+                0b11111111,
+                0b01111110,
+                0b00111100,
+                0b00000000
+                )), 1, '\x1e'),
+  'happy':    (array('B', (
+                0b00000000,     # 0x00
+                0b00000000,     # 0x00
+                0b00111100,     # 0x3c
+                0b01000010,     # 0x42
+                0b10100101,     # 0xa5
+                0b10000001,     # 0x81
+                0b10100101,     # 0xa5
+                0b10011001,     # 0x99
+                0b01000010,     # 0x42
+                0b00111100,     # 0x3c
+                0b00000000      # 0x00
+                )), 1, '\x1d'),
   'happy2':   (array('B', (0x00, 0x08, 0x14, 0x08, 0x01, 0x00, 0x00, 0x61, 0x30, 0x1c, 0x07,
                            0x00, 0x20, 0x50, 0x20, 0x00, 0x80, 0x80, 0x86, 0x0c, 0x38, 0xe0)), 2, '\x1c'),
   'heart':    (array('B', (0x00, 0x00, 0x6c, 0x92, 0x82, 0x82, 0x44, 0x28, 0x10, 0x00, 0x00)), 1, '\x1b'),
@@ -352,17 +385,17 @@ parser.add_argument('--mode-help', action='version', help=argparse.SUPPRESS, ver
  (No "rotation" or "smothering"(?) effect can be expected, though)
 """ % sys.argv[0])
 args = parser.parse_args()
-if sys.platform == "darwin":
+if have_pyhidapi:
   pyhidapi.hid_init()
   devinfo = pyhidapi.hid_enumerate(0x0416, 0x5020)
   #dev = pyhidapi.hid_open(0x0416, 0x5020)
 else:
   dev = usb.core.find(idVendor=0x0416, idProduct=0x5020)
 
-if sys.platform == "darwin":
+if have_pyhidapi:
   if devinfo:
     dev = pyhidapi.hid_open_path(devinfo[0].path)
-    print("using [%s %s] int=%d page=%s via HIDAPI" % (devinfo[0].manufacturer_string, devinfo[0].product_string, devinfo[0].interface_number, devinfo[0].usage_page))
+    print("using [%s %s] int=%d page=%s via pyHIDAPI" % (devinfo[0].manufacturer_string, devinfo[0].product_string, devinfo[0].interface_number, devinfo[0].usage_page))
   else:
     print("No led tag with vendorID 0x0416 and productID 0x5020 found.")
     print("Connect the led tag and run this tool as root.")
@@ -402,10 +435,10 @@ if needpadding:
 # print(buf)
 for i in range(int(len(buf)/64)):
   time.sleep(0.1)
-  if sys.platform == "darwin":
+  if have_pyhidapi:
     pyhidapi.hid_write(dev, buf[i*64:i*64+64])
   else:
     dev.write(1, buf[i*64:i*64+64])
 
-if sys.platform == "darwin":
+if have_pyhidapi:
   pyhidapi.hid_close(dev)

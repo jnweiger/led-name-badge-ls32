@@ -30,6 +30,14 @@ Required dependencies on Mac Systems:
     pip install pyhidapi
     brew install hidapi
 
+Required dependencies on Windows 10:
+
+    (install python from python.org)
+      [x] install Launcher for all Users
+      [x] Add Python 3.7 to PATH
+    pip install pywinusb
+    pip install pyhidapi
+    
 
 #### Examples:
 

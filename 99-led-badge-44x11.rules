@@ -1,0 +1,11 @@
+#
+# Debian/Ubuntu:
+# Drop this file into /lib/udev/rules.d and unplug and re-plug your device.
+# This should change the permissions so that sudo is no longer needed.
+#
+# MODE="0666" is not recommended for multi-user systems.
+
+SUBSYSTEM=="usb",  ATTRS{idVendor}=="0416", ATTRS{idProduct}=="5020", MODE="0666"
+# FIXME: the following line is not sufficient for pyhidapi.
+KERNEL=="hidraw*", ATTRS{idVendor}=="0416", ATTRS{idProduct}=="5020", ATTRS{busnum}=="1", MODE="0666"
+

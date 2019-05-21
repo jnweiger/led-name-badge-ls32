@@ -24,12 +24,12 @@ Required dependencies on Debian/Ubuntu Systems:
     sudo ln -s /usr/lib/x86_64-linux-gnu/libhidapi-hidraw.so.0  /usr/local/lib/
   or
     sudo apt install python3-usb
-    
+
 Required dependencies on Mac Systems:
 
     pip install pyhidapi
     brew install hidapi
-    
+
 
 #### Examples:
 
@@ -55,13 +55,13 @@ uses one builtin and one loaded image. The heart is builtin, and the fablab-logo
 
 ![LED Mini Board](photos/love_my_fablab.jpg)
 
-    sudo python3 ./led-badge-11x44.py sudo ./led-badge-11x44.py -s7 -m0,1 :bicycle: :bicycle_r:
+    sudo python3 ./led-badge-11x44.py -s7 -m0,1 :bicycle: :bicycle_r:
 
 shows a bicycle crossing the display in left-to-right and right-to-left (as a second message). If you select the 'M1-8' mode, the bike permanently runs back and forth the display. You may add a short message to one or both, to make it appear the bike is pulling the text around.
 
 ![LED Mini Board](photos/bicycle.gif)
 
-    sudo python3. /led-badge-11-x44.py -b0,1 -s1 -m5 "  :heart2:    :HEART2:" "  :HEART2:"
+    sudo python3 ./led-badge-11-x44.py -b0,1 -s1 -m5 "  :heart2:    :HEART2:" "  :HEART2:"
 
 shows a simple animation of a slowly beating heart on the first message, and a blinking heart on the second message.
 

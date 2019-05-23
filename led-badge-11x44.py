@@ -16,19 +16,19 @@
 #
 # Windows install:
 # ----------------
-#    (install python from python.org)
+##    https://sourceforge.net/projects/libusb-win32/ ->
+##      -> https://kent.dl.sourceforge.net/project/libusb-win32/libusb-win32-releases/1.2.6.0/libusb-win32-bin-1.2.6.0.zip
+##      cd libusb-win32-bin-1.2.6.0\bin
+## download inf-wizard.exe to your desktop. Right click 'Run as Administrator'
+#       -> Click 0x0416 0x5020 LS32 Custm HID
+#       -> Next -> Next -> Dokumente LS32_Sustm_HID.inf -> Save
+#       -> Install Now... -> Driver Install Complete -> OK
+# download python from python.org
 #      [x] install Launcher for all Users
 #      [x] Add Python 3.7 to PATH
-#    https://sourceforge.net/projects/libusb-win32/ ->
-#      -> https://kent.dl.sourceforge.net/project/libusb-win32/libusb-win32-releases/1.2.6.0/libusb-win32-bin-1.2.6.0.zip
-###### cmd.exe run as Administrator
-#      cd libusb-win32-bin-1.2.6.0\bin
-#      xcopy x86\libusb0_x86.dll c:\Windows\System32\libusb0.dll
-#      xcopy x86\libusb0.sys c:\Windows\System32\drivers\libusb0.sys
-#      inf-wizard.exe
-#       -> Click 0x0416 0x5020 LS32 Custm HID
-#       -> Next -> Next -> Dokumente LS32_Sustm_HID.inf -> Speichern
-#       -> Install Now... -> Driver Install Complete -> OK
+#       -> Click the 'Install Now ...' text message.
+#       -> Optionally click on the 'Disable path length limit' text message. This is always a good thing to do.
+# run cmd.exe as Administrator, enter:
 #    pip install pyusb
 #
 

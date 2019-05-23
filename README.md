@@ -32,11 +32,18 @@ Required dependencies on Mac Systems:
 
 Required dependencies on Windows 10:
 
-    (install python from python.org)
+    Download inf-wizard.exe to your desktop. Right click 'Run as Administrator'
+       -> Click 0x0416 0x5020 LS32 Custm HID
+       -> Next -> Next -> Documents LS32_Sustm_HID.inf -> Save (we don't need that file)
+       -> Install Now... -> Driver Install Complete -> OK
+
+    Download python from python.org
       [x] install Launcher for all Users
       [x] Add Python 3.7 to PATH
-    pip install pywinusb
-    pip install pyhidapi
+       -> Click the 'Install Now ...' text message.
+
+    Run cmd.exe as Administrator, enter:
+      pip install pyusb
     
 
 #### Examples:

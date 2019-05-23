@@ -7,11 +7,31 @@
 # https://www.sertronics-shop.de/computer/pc-peripheriegeraete/usb-gadgets/led-name-tag-11x44-pixel-usb
 # The font_11x44[] data was downloaded from such a device.
 #
-# Requires:
+# Ubuntu install:
+# ---------------
 #  sudo apt-get install python3-usb
 #
 # Optional for image support:
 #  sudo apt-get install python3-pil
+#
+# Windows install:
+# ----------------
+#    (install python from python.org)
+#      [x] install Launcher for all Users
+#      [x] Add Python 3.7 to PATH
+#    https://sourceforge.net/projects/libusb-win32/ ->
+#      -> https://kent.dl.sourceforge.net/project/libusb-win32/libusb-win32-releases/1.2.6.0/libusb-win32-bin-1.2.6.0.zip
+###### cmd.exe run as Administrator
+#      cd libusb-win32-bin-1.2.6.0\bin
+#      xcopy x86\libusb0_x86.dll c:\Windows\System32\libusb0.dll
+#      xcopy x86\libusb0.sys c:\Windows\System32\drivers\libusb0.sys
+#      inf-wizard.exe
+#       -> Click 0x0416 0x5020 LS32 Custm HID
+#       -> Next -> Next -> Dokumente LS32_Sustm_HID.inf -> Speichern
+#       -> Install Now... -> Driver Install Complete -> OK
+#    pip install pyusb
+#
+
 #
 # v0.1, 2019-03-05, jw  initial draught. HID code is much simpler than expected.
 # v0.2, 2019-03-07, jw  support for loading bitmaps added.
@@ -22,11 +42,13 @@
 # v0.6, 2019-03-14, jw  Added --mode-help with hints and example for making animations.
 #                       Options -b --blink, -a --ants added. Removed -p from usage.
 # v0.7, 2019-05-20, jw  Support pyhidapi, fallback to usb.core. Added python2 compatibility.
+# v0.8, 2019-05-23, jw  Support usb.core on windows via libusb-win32
 
 import sys, os, re, time, argparse
 from array import array
 try:
   import pyhidapi
+  pyhidapi.hid_init()
   have_pyhidapi = True
 except:
   have_pyhidapi = False
@@ -50,7 +72,7 @@ or
     sys.exit(1)
 
 
-__version = "0.7"
+__version = "0.8"
 
 font_11x44 = (
   # 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -386,7 +408,6 @@ parser.add_argument('--mode-help', action='version', help=argparse.SUPPRESS, ver
 """ % sys.argv[0])
 args = parser.parse_args()
 if have_pyhidapi:
-  pyhidapi.hid_init()
   devinfo = pyhidapi.hid_enumerate(0x0416, 0x5020)
   #dev = pyhidapi.hid_open(0x0416, 0x5020)
 else:
@@ -405,8 +426,12 @@ else:
     print("No led tag with vendorID 0x0416 and productID 0x5020 found.")
     print("Connect the led tag and run this tool as root.")
     sys.exit(1)
-  if dev.is_kernel_driver_active(0):
-    dev.detach_kernel_driver(0)
+  try:
+    # win32: NotImplementedError: is_kernel_driver_active
+    if dev.is_kernel_driver_active(0):
+      dev.detach_kernel_driver(0)
+  except:
+    pass
   dev.set_configuration()
   print("using [%s %s] bus=%d dev=%d" % (dev.manufacturer, dev.product, dev.bus, dev.address))
 
@@ -432,7 +457,7 @@ needpadding = len(buf)%64
 if needpadding:
   buf.extend( (0,) * (64-needpadding) )
 
-# print(buf)
+# print(buf)      # array('B', [119, 97, 110, 103, 0, 0, 0, 0, 48, 48, 48, 48, 48, 48, 48, 48, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 60, 126, 255, 255, 255, 255, 126, 60, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 for i in range(int(len(buf)/64)):
   time.sleep(0.1)
   if have_pyhidapi:

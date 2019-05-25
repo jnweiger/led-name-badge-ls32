@@ -458,11 +458,12 @@ if needpadding:
   buf.extend( (0,) * (64-needpadding) )
 
 # print(buf)      # array('B', [119, 97, 110, 103, 0, 0, 0, 0, 48, 48, 48, 48, 48, 48, 48, 48, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 60, 126, 255, 255, 255, 255, 126, 60, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-for i in range(int(len(buf)/64)):
-  time.sleep(0.1)
-  if have_pyhidapi:
-    pyhidapi.hid_write(dev, buf[i*64:i*64+64])
-  else:
+
+if have_pyhidapi:
+  pyhidapi.hid_write(dev, buf)
+else:
+  for i in range(int(len(buf)/64)):
+    time.sleep(0.1)
     dev.write(1, buf[i*64:i*64+64])
 
 if have_pyhidapi:

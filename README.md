@@ -27,7 +27,9 @@ Required dependencies on Debian/Ubuntu Systems:
 
 Required dependencies on Mac Systems:
 
+    sudo easy_install pip
     pip install pyhidapi
+    ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" < /dev/null 2> /dev/null 
     brew install hidapi
 
 Required dependencies on Windows 10:

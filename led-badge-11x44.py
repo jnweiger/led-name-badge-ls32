@@ -47,6 +47,7 @@
 import sys, os, re, time, argparse
 from array import array
 try:
+  if sys.version_info[0] < 3: raise Exception("prefer usb.core with python-2.x because of https://github.com/jnweiger/led-badge-44x11/issues/9")
   import pyhidapi
   pyhidapi.hid_init()
   have_pyhidapi = True
@@ -194,14 +195,17 @@ font_11x44 = (
   0x00, 0x3c, 0x66, 0x66, 0x66, 0x7c, 0x66, 0x66, 0x66, 0x6c, 0x60,
 )
 
-charmap = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' + \
-          'abcdefghijklmnopqrstuvwxyz' + \
-          '0987654321^ !"\0$%&/()=?` °\\}][{' + \
-          "@ ~ |<>,;.:-_#'+* " + "äöüÄÖÜß"
+charmap = u'ABCDEFGHIJKLMNOPQRSTUVWXYZ' + \
+          u'abcdefghijklmnopqrstuvwxyz' + \
+          u'0987654321^ !"\0$%&/()=?` °\\}][{' + \
+          u"@ ~ |<>,;.:-_#'+* " + \
+          u"äöüÄÖÜß"
 
 char_offset = {}
 for i in range(len(charmap)):
   char_offset[charmap[i]] = 11 * i
+  # print(i, charmap[i], char_offset[charmap[i]])
+
 
 bitmap_preloaded = [ ([],0) ]
 bitmaps_preloaded_unused = False

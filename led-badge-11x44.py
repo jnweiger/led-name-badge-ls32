@@ -45,6 +45,7 @@
 # v0.8, 2019-05-23, jw  Support usb.core on windows via libusb-win32
 
 import sys, os, re, time, argparse
+from datetime import datetime
 from array import array
 try:
   if sys.version_info[0] < 3: raise Exception("prefer usb.core with python-2.x because of https://github.com/jnweiger/led-badge-44x11/issues/9")
@@ -378,6 +379,14 @@ def header(lengths, speeds, modes, blink, ants):
   for i in range(len(lengths)):
     h[17+2*i] = lengths[i]
 
+  cdate = datetime.now()
+  h[38+0] = cdate.year % 100
+  h[38+1] = cdate.month
+  h[38+2] = cdate.day
+  h[38+3] = cdate.hour
+  h[38+4] = cdate.minute
+  h[38+5] = cdate.second
+  
   return h
 
 

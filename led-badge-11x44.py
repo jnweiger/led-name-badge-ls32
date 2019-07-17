@@ -43,11 +43,12 @@
 #                       Options -b --blink, -a --ants added. Removed -p from usage.
 # v0.7, 2019-05-20, jw  Support pyhidapi, fallback to usb.core. Added python2 compatibility.
 # v0.8, 2019-05-23, jw  Support usb.core on windows via libusb-win32
+# v0.9, 2019-07-17, jw  Support 48x12 configuration too.
 
 import sys, os, re, time, argparse
 from array import array
 try:
-  if sys.version_info[0] < 3: raise Exception("prefer usb.core with python-2.x because of https://github.com/jnweiger/led-badge-44x11/issues/9")
+  if sys.version_info[0] < 3: raise Exception("prefer usb.core with python-2.x because of https://github.com/jnweiger/led-badge-ls32/issues/9")
   import pyhidapi
   pyhidapi.hid_init()
   have_pyhidapi = True
@@ -73,7 +74,7 @@ or
     sys.exit(1)
 
 
-__version = "0.8"
+__version = "0.9"
 
 font_11x44 = (
   # 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -381,7 +382,8 @@ def header(lengths, speeds, modes, blink, ants):
   return h
 
 
-parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, description='Upload messages or graphics to a 44x11 led badge via USB HID.\nVersion %s from https://github.com/jnweiger/led-badge-44x11\n -- see there for more examples and for updates.' % __version, epilog='Example combining image and text:\n sudo %s "I:HEART2:you"' % sys.argv[0])
+parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, description='Upload messages or graphics to a 44x11 led badge via USB HID.\nVersion %s from https://github.com/jnweiger/led-badge-ls32\n -- see there for more examples and for updates.' % __version, epilog='Example combining image and text:\n sudo %s "I:HEART2:you"' % sys.argv[0])
+parser.add_argument('-t', '--type', default='11x44', help="Type of display: supported values are 12x48 or (default) 11x44. Rename the program to led-badge-12x48, to switch the default.")
 parser.add_argument('-s', '--speed', default='4', help="Scroll speed (Range 1..8). Up to 8 comma-seperated values")
 parser.add_argument('-m', '--mode',  default='0', help="Up to 8 mode values: Scroll-left(0) -right(1) -up(2) -down(3); still-centered(4); animation(5); drop-down(6); curtain(7); laser(8); See '--mode-help' for more details.")
 parser.add_argument('-b', '--blink', default='0', help="1: blinking, 0: normal. Up to 8 comma-seperated values")
@@ -450,6 +452,16 @@ for arg in args.message:
 
 if bitmaps_preloaded_unused == True:
   print("\nWARNING:\n Your preloaded images are not used.\n Try without '-p' or embed the control character '^A' in your message.\n")
+
+if '12' in args.type or '12' in sys.argv[0]:
+  print("Type: 12x48")
+  for msg in msgs:
+    # trivial hack to support 12x48 badges:
+    # patch extra empty lines into the message stream.
+    for o in reversed(range(1, int(len(msg[0])/11)+1)):
+      msg[0][o*11:o*11] = array('B', [0])
+else:
+  print("Type: 11x44")
 
 buf = array('B')
 buf.extend(header(list(map(lambda x: x[1], msgs)), args.speed, args.mode, args.blink, args.ants))

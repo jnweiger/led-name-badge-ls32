@@ -8,8 +8,12 @@ Upload tool for an led name tag with USB-HID interface
 There are many different versions of LED Badges on the market.
 This one uses an USB-HID interface, while others use USB-Serial (see references below).
 
-The type supported by this project has an array of 44 x 11 LEDs and
-identifies itself on the USB as
+The types supported by this project have an array of
+
+- 44 x 11 LEDs or
+- 48 x 12 LEDs.
+
+In both configurations, the badge identifies itself on the USB as
 
     idVendor=0416, idProduct=5020
     Mfr=1, Product=2, SerialNumber=0
@@ -29,7 +33,7 @@ Required dependencies on Mac Systems:
 
     sudo easy_install pip
     pip install pyhidapi
-    ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" < /dev/null 2> /dev/null 
+    ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" < /dev/null 2> /dev/null
     brew install hidapi
 
 Required dependencies on Windows 10:
@@ -46,7 +50,7 @@ Required dependencies on Windows 10:
 
     Run cmd.exe as Administrator, enter:
       pip install pyusb
-    
+
 
 #### Examples:
 
@@ -91,8 +95,8 @@ prints the list of builtin icon names, including :happy: :happy2: :heart: :HEART
 prints some condensed help:
 
 <pre>
-usage: led-badge-11x44.py [-h] [-s SPEED] [-m MODE] [-b BLINK] [-a ANTS]
-                          [-p FILE] [-l]
+usage: led-badge-11x44.py [-h] [-t TYPE] [-s SPEED] [-m MODE] [-b BLINK]
+			  [-a ANTS] [-p FILE] [-l]
                           MESSAGE [MESSAGE ...]
 
 Upload messages or graphics to a 44x11 led badge via USB HID.
@@ -106,6 +110,10 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
+  -t TYPE, --type TYPE
+			Type of display: supported values are 12x48 or
+			(default) 11x44. Rename the program to led-badge-12x48,
+			to switch the default.
   -s SPEED, --speed SPEED
                         Scroll speed (Range 1..8). Up to 8 comma-seperated
                         values

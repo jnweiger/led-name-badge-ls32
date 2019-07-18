@@ -21,7 +21,7 @@ pixel pitch: 1.93mm  | 1.77mm
 
 ## 12x48
 
-screen size: 85x23mm
+screen size: 85x23mm  
 pixel pitch: ??.?mm
 
 ### controller

@@ -6,16 +6,42 @@
 eventually this is the original manufacture:  
 [Shenzhen Lesun Electronics Co., Ltd.](https://lesun-led.en.alibaba.com/)
 
+
+please verify the measurements ;-)
+
 ## 11x44
+
+screen size: 85x23mm | 78x22mm
+pixel pitch: 1.93mm  | 1.77mm
+
 ### controller
 ??
 
+
+
 ## 12x48
+
+screen size: 85x23mm
+pixel pitch: ??.?mm
+
 ### controller
 MindMotion MM32L052PF  
 ARM Cortex-M0 48MHz  
 32KB Flash, 4KB RAM, 39 IO, LQFP48  
 [MM32L0 Datasheet](http://www.mindmotion.com.cn/en/download.aspx?cid=2564)  
+
+
+## 11x55
+
+
+screen size: 93x23mm  
+pixel pitch: 1.77mm
+
+### controller
+??
+
+
+
 
 ---
 

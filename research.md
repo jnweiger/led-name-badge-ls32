@@ -11,7 +11,7 @@ please verify the measurements ;-)
 
 ## 11x44
 
-screen size: 85x23mm | 78x22mm
+screen size: 85x23mm | 78x22mm  
 pixel pitch: 1.93mm  | 1.77mm
 
 ### controller

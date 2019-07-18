@@ -13,6 +13,8 @@ The types supported by this project have an array of
 - 44 x 11 LEDs or
 - 48 x 12 LEDs.
 
+The manufacturer is probably https://lesun-led.en.alibaba.com/
+
 In both configurations, the badge identifies itself on the USB as
 
     idVendor=0416, idProduct=5020

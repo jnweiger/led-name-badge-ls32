@@ -377,7 +377,9 @@ def header(lengths, speeds, modes, blink, ants):
     h[8+i] = 16*s[i] + m[i]
 
   for i in range(len(lengths)):
-    h[17+2*i] = lengths[i]
+    h[17+(2*i)-1] = lengths[i] // 256
+    h[17+(2*i)]   = lengths[i] % 256
+
 
   return h
 

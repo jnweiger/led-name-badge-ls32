@@ -15,7 +15,12 @@ screen size: 85x23mm | 78x22mm
 pixel pitch: 1.93mm  | 1.77mm
 
 ### controller
-??
+[(source picture)](https://github.com/jnweiger/led-name-badge-ls32/pull/14#issuecomment-513202342)  
+MindMotion MM32L062PF  
+ARM Cortex-M0 48MHz  
+64KB Flash, 8KB RAM, 39 IO, LQFP48  
+[MM32L0 Documents](http://www.mindmotion.com.cn/en/download.aspx?cid=2564)  
+[MM32L0 ordering/features overview](http://www.mindmotion.com.cn/userfiles/images/MM32L0XiLieWenDang/DS_MM32L0xx_n_V2.13_EN.pdf#page=10&zoom=auto,-125,817)  
 
 
 
@@ -28,7 +33,7 @@ pixel pitch: ??.?mm
 MindMotion MM32L052PF  
 ARM Cortex-M0 48MHz  
 32KB Flash, 4KB RAM, 39 IO, LQFP48  
-[MM32L0 Datasheet](http://www.mindmotion.com.cn/en/download.aspx?cid=2564)  
+[MM32L0 Documents](http://www.mindmotion.com.cn/en/download.aspx?cid=2564)  
 
 
 ## 11x55
@@ -38,7 +43,8 @@ screen size: 93x23mm
 pixel pitch: 1.77mm
 
 ### controller
-??
+?? MM32W062PFB ??
+acording to [this list](http://www.mindmotion.com.cn/userfiles/images/MM32%20MCUXuanXingBiao/%e7%81%b5%e5%8a%a8%e5%be%ae%e7%94%b5%e5%ad%90%e5%ae%a3%e4%bc%a0%e5%86%8c_SC_SD_2019515.pdf#page=7&zoom=auto,-268,374) the **W** series are the 'Wireless Connectivity' devices..
 
 
 

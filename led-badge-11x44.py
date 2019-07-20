@@ -46,6 +46,7 @@
 # v0.9, 2019-07-17, jw  Support 48x12 configuration too.
 
 import sys, os, re, time, argparse
+from datetime import datetime
 from array import array
 try:
   if sys.version_info[0] < 3: raise Exception("prefer usb.core with python-2.x because of https://github.com/jnweiger/led-badge-ls32/issues/9")
@@ -381,6 +382,14 @@ def header(lengths, speeds, modes, blink, ants):
     h[17+(2*i)]   = lengths[i] % 256
 
 
+  cdate = datetime.now()
+  h[38+0] = cdate.year % 100
+  h[38+1] = cdate.month
+  h[38+2] = cdate.day
+  h[38+3] = cdate.hour
+  h[38+4] = cdate.minute
+  h[38+5] = cdate.second
+  
   return h
 
 

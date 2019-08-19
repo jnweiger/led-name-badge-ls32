@@ -329,7 +329,6 @@ def bitmap_img(file):
         bit_val = 0
         x = 8*col+bit
         pixel_color = im.getpixel( (x, row) )
-        print(pixel_color)
         if isinstance(pixel_color, tuple):
           monochrome_color = sum(pixel_color[:3]) / len(pixel_color[:3])
         elif isinstance(pixel_color, int):

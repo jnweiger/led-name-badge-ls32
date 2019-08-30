@@ -328,13 +328,14 @@ def bitmap_img(file):
       for bit in range(8):
         bit_val = 0
         x = 8*col+bit
-        pixel_color = im.getpixel( (x, row) )
-        if isinstance(pixel_color, tuple):
-          monochrome_color = sum(pixel_color[:3]) / len(pixel_color[:3])
-        elif isinstance(pixel_color, int):
-          monochrome_color = pixel_color
-        else:
-          sys.exit("%s: Unknown pixel format detected (%s)!" % (file, pixel_color))
+        if x < im.width:
+          pixel_color = im.getpixel( (x, row) )
+          if isinstance(pixel_color, tuple):
+            monochrome_color = sum(pixel_color[:3]) / len(pixel_color[:3])
+          elif isinstance(pixel_color, int):
+            monochrome_color = pixel_color
+          else:
+            sys.exit("%s: Unknown pixel format detected (%s)!" % (file, pixel_color))
         if x < im.width and monochrome_color > 127:
           bit_val = 1 << (7-bit)
         byte_val += bit_val

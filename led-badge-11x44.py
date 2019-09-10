@@ -323,9 +323,9 @@ def bitmap_img(file):
   buf = array('B')
   cols = int((im.width+7)/8)
   for col in range(cols):
-    for row in range(11):
+    for row in range(11):       # [0..10]
       byte_val = 0
-      for bit in range(8):
+      for bit in range(8):      # [0..7]
         bit_val = 0
         x = 8*col+bit
         if x < im.width:
@@ -336,9 +336,9 @@ def bitmap_img(file):
             monochrome_color = pixel_color
           else:
             sys.exit("%s: Unknown pixel format detected (%s)!" % (file, pixel_color))
-        if x < im.width and monochrome_color > 127:
-          bit_val = 1 << (7-bit)
-        byte_val += bit_val
+          if monochrome_color > 127:
+            bit_val = 1 << (7-bit)
+          byte_val += bit_val
       buf.append(byte_val)
   im.close()
   return (buf, cols)

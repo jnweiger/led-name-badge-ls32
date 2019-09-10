@@ -30,6 +30,7 @@
 #       -> Optionally click on the 'Disable path length limit' text message. This is always a good thing to do.
 # run cmd.exe as Administrator, enter:
 #    pip install pyusb
+#    pip install pillow
 #
 
 #
@@ -44,6 +45,7 @@
 # v0.7, 2019-05-20, jw  Support pyhidapi, fallback to usb.core. Added python2 compatibility.
 # v0.8, 2019-05-23, jw  Support usb.core on windows via libusb-win32
 # v0.9, 2019-07-17, jw  Support 48x12 configuration too.
+# v0.10, 2019-09-09, jw Support for loading monochrome images. Typos fixed.
 
 import sys, os, re, time, argparse
 from datetime import datetime
@@ -75,7 +77,7 @@ or
     sys.exit(1)
 
 
-__version = "0.9"
+__version = "0.10"
 
 font_11x44 = (
   # 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -263,6 +265,7 @@ bitmap_builtin = {}
 for i in bitmap_named:
   bitmap_builtin[bitmap_named[i][2]] = bitmap_named[i]
 
+
 def bitmap_char(ch):
   """ Returns a tuple of 11 bytes,
       ch = '_' returns (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255)
@@ -359,6 +362,7 @@ proto_header = (
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 )
+
 
 def header(lengths, speeds, modes, blink, ants):
   """ lengths[0] is the number of chars of the first text

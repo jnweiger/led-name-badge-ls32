@@ -23,26 +23,28 @@ In both configurations, the badge identifies itself on the USB as
 
 ## Command Line Installation and Usage
 
-Required dependencies on Debian/Ubuntu Systems:
+### Required dependencies on Debian/Ubuntu Systems
 
     sudo pip install pyhidapi
+    sudo pip install pillow
     sudo apt-get install libhidapi-hidraw0
     sudo ln -s /usr/lib/x86_64-linux-gnu/libhidapi-hidraw.so.0  /usr/local/lib/
   or
-    sudo apt install python3-usb
+    sudo apt install python3-usb python3-pil
 
-Required dependencies on Mac Systems:
+### Required dependencies on Mac Systems
 
     sudo easy_install pip
     pip install pyhidapi
+    pip install pillow
     ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" < /dev/null 2> /dev/null
     brew install hidapi
   or
     Try with `pip3 install pyhidapi`
 
-Required dependencies on Windows 10:
+### Required dependencies on Windows 10
 
-    Download inf-wizard.exe to your desktop. Right click 'Run as Administrator'
+    Download win/inf-wizard.exe to your desktop. Right click 'Run as Administrator'
        -> Click 0x0416 0x5020 LS32 Custm HID
        -> Next -> Next -> Documents LS32_Sustm_HID.inf -> Save (we don't need that file)
        -> Install Now... -> Driver Install Complete -> OK
@@ -54,6 +56,13 @@ Required dependencies on Windows 10:
 
     Run cmd.exe as Administrator, enter:
       pip install pyusb
+      pip install pillow
+
+### Required dependencies on Windows 7
+
+    Download win/win32-bin-1.2.6.0.zip to your desktop. Extract.
+    Find the inf-wizard.exe in the bin folder. Right click 'Run as Administrator'
+    Then continue as with windows 10 above.
 
 
 #### Examples:

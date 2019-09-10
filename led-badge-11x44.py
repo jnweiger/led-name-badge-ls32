@@ -134,7 +134,7 @@ font_11x44 = (
   0x00, 0x00, 0x00, 0x00, 0xc6, 0xc6, 0xc6, 0x7e, 0x06, 0x0c, 0xf8,
   0x00, 0x00, 0x00, 0x00, 0xfe, 0x8c, 0x18, 0x30, 0x62, 0xfe, 0x00,
 
-  # '0987654321^ !"\0$%&/()=?` °\\}][{' + "@ ~ |<>,;.:-_#'+* "
+  # '0987654321^ !"\0$%&/()=?` °\\}][{'
   0x00, 0x7c, 0xc6, 0xce, 0xde, 0xf6, 0xe6, 0xc6, 0xc6, 0x7c, 0x00,
   0x00, 0x7c, 0xc6, 0xc6, 0xc6, 0x7e, 0x06, 0x06, 0xc6, 0x7c, 0x00,
   0x00, 0x7c, 0xc6, 0xc6, 0xc6, 0x7c, 0xc6, 0xc6, 0xc6, 0x7c, 0x00,
@@ -401,12 +401,12 @@ def header(lengths, speeds, modes, blink, ants):
   return h
 
 
-parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, description='Upload messages or graphics to a 44x11 led badge via USB HID.\nVersion %s from https://github.com/jnweiger/led-badge-ls32\n -- see there for more examples and for updates.' % __version, epilog='Example combining image and text:\n sudo %s "I:HEART2:you"' % sys.argv[0])
+parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, description='Upload messages or graphics to a 11x44 led badge via USB HID.\nVersion %s from https://github.com/jnweiger/led-badge-ls32\n -- see there for more examples and for updates.' % __version, epilog='Example combining image and text:\n sudo %s "I:HEART2:you"' % sys.argv[0])
 parser.add_argument('-t', '--type', default='11x44', help="Type of display: supported values are 12x48 or (default) 11x44. Rename the program to led-badge-12x48, to switch the default.")
-parser.add_argument('-s', '--speed', default='4', help="Scroll speed (Range 1..8). Up to 8 comma-seperated values")
+parser.add_argument('-s', '--speed', default='4', help="Scroll speed (Range 1..8). Up to 8 comma-separated values")
 parser.add_argument('-m', '--mode',  default='0', help="Up to 8 mode values: Scroll-left(0) -right(1) -up(2) -down(3); still-centered(4); animation(5); drop-down(6); curtain(7); laser(8); See '--mode-help' for more details.")
-parser.add_argument('-b', '--blink', default='0', help="1: blinking, 0: normal. Up to 8 comma-seperated values")
-parser.add_argument('-a', '--ants',  default='0', help="1: animated border, 0: normal. Up to 8 comma-seperated values")
+parser.add_argument('-b', '--blink', default='0', help="1: blinking, 0: normal. Up to 8 comma-separated values")
+parser.add_argument('-a', '--ants',  default='0', help="1: animated border, 0: normal. Up to 8 comma-separated values")
 parser.add_argument('-p', '--preload',  metavar='FILE', action='append', help=argparse.SUPPRESS)       # "Load bitmap images. Use ^A, ^B, ^C, ... in text messages to make them visible. Deprecated, embed within ':' instead")
 parser.add_argument('-l', '--list-names', action='version', help="list named icons to be embedded in messages and exit", version=':'+':  :'.join(bitmap_named.keys())+':  ::  or e.g. :path/to/some_icon.png:')
 parser.add_argument('message', metavar='MESSAGE', nargs='+', help="Up to 8 message texts with embedded builtin icons or loaded images within colons(:) -- See -l for a list of builtins")
@@ -417,19 +417,19 @@ parser.add_argument('--mode-help', action='version', help=argparse.SUPPRESS, ver
  Animation frames are 6 character (or 48px) wide. Upload an animation of
  N frames as one image N*48 pixels wide, 11 pixels high.
  Frames run from left to right and repeat endless.
- Speed [1..8] result in ca. [1.2 1.3 2.0 2.4 2.8 4.5 7.5 15] fps.
+ Speeds [1..8] result in ca. [1.2 1.3 2.0 2.4 2.8 4.5 7.5 15] fps.
 
  Example of a slowly beating heart:
   sudo %s -s1 -m5 "  :heart2:    :HEART2:"
 
--m 9 "Smoth"
+-m 9 "Smooth"
 -m 10 "Rotate"
 
  These modes are mentioned in the BMP Badge software.
  Text is shown static, or sometimes (longer texts?) not shown at all.
- One significant difference is: The text of the fist message stays visible after
+ One significant difference is: The text of the first message stays visible after
  upload, even if the USB cable remains connected.
- (No "rotation" or "smothering"(?) effect can be expected, though)
+ (No "rotation" or "smoothing"(?) effect can be expected, though)
 """ % sys.argv[0])
 args = parser.parse_args()
 if have_pyhidapi:

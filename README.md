@@ -37,6 +37,8 @@ Required dependencies on Mac Systems:
     pip install pyhidapi
     ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" < /dev/null 2> /dev/null
     brew install hidapi
+  or
+    Try with `pip3 install pyhidapi`
 
 Required dependencies on Windows 10:
 

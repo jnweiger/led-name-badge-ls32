@@ -364,7 +364,7 @@ proto_header = (
 )
 
 
-def header(lengths, speeds, modes, blink, ants):
+def header(lengths, speeds, modes, blink, ants, brightness=100):
   """ lengths[0] is the number of chars of the first text
 
       Speeds come in as 1..8, but are needed 0..7 here.
@@ -382,6 +382,14 @@ def header(lengths, speeds, modes, blink, ants):
   m = m + [m[-1]]*(8-len(m))    # repeat last element
 
   h = list(proto_header)
+
+  if brightness <= 25:
+    h[5] = 0x40
+  elif brightness <= 50:
+    h[5] = 0x20
+  elif brightness <= 75:
+    h[5] = 0x10
+
   for i in range(8):
     h[6] += b[i]<<i
     h[7] += a[i]<<i
@@ -408,6 +416,7 @@ def header(lengths, speeds, modes, blink, ants):
 parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, description='Upload messages or graphics to a 11x44 led badge via USB HID.\nVersion %s from https://github.com/jnweiger/led-badge-ls32\n -- see there for more examples and for updates.' % __version, epilog='Example combining image and text:\n sudo %s "I:HEART2:you"' % sys.argv[0])
 parser.add_argument('-t', '--type', default='11x44', help="Type of display: supported values are 12x48 or (default) 11x44. Rename the program to led-badge-12x48, to switch the default.")
 parser.add_argument('-s', '--speed', default='4', help="Scroll speed (Range 1..8). Up to 8 comma-separated values")
+parser.add_argument('-B', '--brightness', default='100', help="Brightness for the display in percent: 25, 50, 75, or 100")
 parser.add_argument('-m', '--mode',  default='0', help="Up to 8 mode values: Scroll-left(0) -right(1) -up(2) -down(3); still-centered(4); animation(5); drop-down(6); curtain(7); laser(8); See '--mode-help' for more details.")
 parser.add_argument('-b', '--blink', default='0', help="1: blinking, 0: normal. Up to 8 comma-separated values")
 parser.add_argument('-a', '--ants',  default='0', help="1: animated border, 0: normal. Up to 8 comma-separated values")
@@ -487,7 +496,7 @@ else:
   print("Type: 11x44")
 
 buf = array('B')
-buf.extend(header(list(map(lambda x: x[1], msgs)), args.speed, args.mode, args.blink, args.ants))
+buf.extend(header(list(map(lambda x: x[1], msgs)), args.speed, args.mode, args.blink, args.ants, args.brightness))
 
 for msg in msgs:
   buf.extend(msg[0])

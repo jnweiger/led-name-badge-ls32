@@ -46,6 +46,7 @@
 # v0.8, 2019-05-23, jw  Support usb.core on windows via libusb-win32
 # v0.9, 2019-07-17, jw  Support 48x12 configuration too.
 # v0.10, 2019-09-09, jw Support for loading monochrome images. Typos fixed.
+# v0.11, 2019-09-29, jw New option --brightness added.
 
 import sys, os, re, time, argparse
 from datetime import datetime
@@ -77,7 +78,7 @@ or
     sys.exit(1)
 
 
-__version = "0.10"
+__version = "0.11"
 
 font_11x44 = (
   # 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -496,7 +497,7 @@ else:
   print("Type: 11x44")
 
 buf = array('B')
-buf.extend(header(list(map(lambda x: x[1], msgs)), args.speed, args.mode, args.blink, args.ants, args.brightness))
+buf.extend(header(list(map(lambda x: x[1], msgs)), args.speed, args.mode, args.blink, args.ants, int(args.brightness)))
 
 for msg in msgs:
   buf.extend(msg[0])

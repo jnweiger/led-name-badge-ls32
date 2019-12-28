@@ -47,6 +47,7 @@
 # v0.9, 2019-07-17, jw  Support 48x12 configuration too.
 # v0.10, 2019-09-09, jw Support for loading monochrome images. Typos fixed.
 # v0.11, 2019-09-29, jw New option --brightness added.
+# v0.12, 2019-12-27, jw hint at pip3 -- as discussed in https://github.com/jnweiger/led-name-badge-ls32/issues/19
 
 import sys, os, re, time, argparse
 from datetime import datetime
@@ -64,10 +65,12 @@ except:
     print("ERROR: Need the pyhidapi or usb.core module.")
     if sys.platform == "darwin":
       print("""Please try
+  pip3 install pyhidapi
   pip install pyhidapi
   brew install hidapi""")
     elif sys.platform == "linux":
       print("""Please try
+  sudo pip3 install pyhidapi
   sudo pip install pyhidapi
   sudo apt-get install libhidapi-hidraw0
   sudo ln -s /usr/lib/x86_64-linux-gnu/libhidapi-hidraw.so.0  /usr/local/lib/
@@ -78,7 +81,7 @@ or
     sys.exit(1)
 
 
-__version = "0.11"
+__version = "0.12"
 
 font_11x44 = (
   # 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'

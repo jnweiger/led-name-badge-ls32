@@ -37,6 +37,10 @@ access to the badge via USB.
     sudo cp 99-led-badge-44x11.rules /etc/udev/rules.d/
     sudo udevadm control --reload-rules && sudo udevadm trigger
 
+### Required dependencies on Arch Linux
+
+    sudo pacman -Syu python-pyusb python-hidapi
+
 ### Required dependencies on Debian/Ubuntu Systems
 
 #### Using Debian/Ubuntu packages (recommended):

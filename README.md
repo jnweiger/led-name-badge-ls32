@@ -23,6 +23,10 @@ In both configurations, the badge identifies itself on the USB as
 
 ## Command Line Installation and Usage
 
+### Required dependencies on Arch Linux
+
+    sudo pacman -Syu python-pyusb python-hidapi
+
 ### Required dependencies on Debian/Ubuntu Systems
 
     sudo pip install pyhidapi

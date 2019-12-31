@@ -23,6 +23,14 @@ In both configurations, the badge identifies itself on the USB as
 
 ## Command Line Installation and Usage
 
+### User access to badge on all Linuxes
+
+The following will install a udev rule allowing anybody read/write
+access to the badge via USB.
+
+    sudo cp 99-led-badge-44x11.rules /etc/udev/rules.d/
+    sudo udevadm control --reload-rules && sudo udevadm trigger
+
 ### Required dependencies on Debian/Ubuntu Systems
 
     sudo pip install pyhidapi

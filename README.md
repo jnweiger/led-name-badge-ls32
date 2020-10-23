@@ -3,10 +3,7 @@ Upload tool for an led name tag with USB-HID interface
 
 ![LED Mini Board](photos/green_badge.jpg)
 
-## Warning
-
-There are many different versions of LED Badges on the market.
-This one uses an USB-HID interface, while others use USB-Serial (see references below).
+## Hardware
 
 The types supported by this project have an array of
 
@@ -20,6 +17,11 @@ In both configurations, the badge identifies itself on the USB as
     idVendor=0416, idProduct=5020
     Mfr=1, Product=2, SerialNumber=0
     LSicroelectronics LS32 Custm HID
+
+## Warning
+
+There are many different versions of LED Badges on the market.
+This one uses an USB-HID interface, while others use USB-Serial (see references below).
 
 ## Command Line Installation and Usage
 

@@ -95,7 +95,7 @@ Per default you will only see 'Hello'.  To see all messages, press the small but
 
     sudo python3 ./led-badge-11x44.py -m 5 :gfx/fablabnbg_logo_44x11.png:
 
-loads a fullscreen still image. Avoid whitespace between colons and name.
+loads a fullscreen still image. Avoid whitespace between colons and name. If you receive a message `ImportError: cannot import name '_imaging'`, then try to update the corresponding package: `sudo pip install -U Pillow`
 
     sudo python3 ./led-badge-11x44.py "I:HEART2:my:gfx/fablab_logo_16x11.png:fablab:1:"
 

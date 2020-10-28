@@ -42,6 +42,10 @@ access to the badge via USB.
   or
     sudo apt install python3-usb python3-pil
 
+### Required dependencies on Fedora Systems
+
+    sudo dnf install hidapi python3-hidapi python3-pillow python3-pyusb
+
 ### Required dependencies on Mac Systems
 
     sudo easy_install pip

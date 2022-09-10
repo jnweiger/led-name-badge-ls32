@@ -109,7 +109,7 @@ shows a bicycle crossing the display in left-to-right and right-to-left (as a se
 
 ![LED Mini Board](photos/bicycle.gif)
 
-    sudo python3 ./led-badge-11-x44.py -b0,1 -s1 -m5 "  :heart2:    :HEART2:" "  :HEART2:"
+    sudo python3 ./led-badge-11x44.py -b0,1 -s1 -m5 "  :heart2:    :HEART2:" "  :HEART2:"
 
 shows a simple animation of a slowly beating heart on the first message, and a blinking heart on the second message.
 

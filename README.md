@@ -42,7 +42,7 @@ access to the badge via USB.
 #### manually using a python virtual environment
  
 Using a venv will allow to use pip to install dependencies without the danger
-that the instaled modules will interfere with the system installed ones.
+that the installed modules will interfere with the system installed ones.
 
     sudo apt install python3-venv
     python3 -m venv ledtag

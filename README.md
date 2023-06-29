@@ -35,12 +35,28 @@ access to the badge via USB.
 
 ### Required dependencies on Debian/Ubuntu Systems
 
-    sudo pip install pyhidapi
-    sudo pip install pillow
-    sudo apt-get install libhidapi-hidraw0
-    sudo ln -s /usr/lib/x86_64-linux-gnu/libhidapi-hidraw.so.0  /usr/local/lib/
-  or
+#### Using Debian/Ubuntu packages (recommended):
+
     sudo apt install python3-usb python3-pil
+
+#### manually using a python virtual environment
+ 
+Using a venv will allow to use pip to install dependencies without the danger
+that the installed modules will interfere with the system installed ones.
+
+    sudo apt install python3-venv
+    python3 -m venv ledtag
+    source ledtag/bin/activate
+    pip install pyhidapi pyusb pillow
+    # this should now work:
+    # python3 led-badge-11x44.py -m 6 -s 8 "Hello" "World!"
+
+if the udev rules are installed, you should be able to access the badge without sudo / root privileges.
+
+To reuse the venv again at a later point:
+
+    source ledtag/bin/activate
+    python3 led-badge-11x44.py …
 
 ### Required dependencies on Fedora Systems
 

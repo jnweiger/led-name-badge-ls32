@@ -1,7 +1,11 @@
 # Led-Badge-44x11
 Upload tool for an led name tag with USB-HID interface
 
-![LED Mini Board](photos/green_badge.jpg)
+![LED Mini Board](photos/blueBadge.jpg)
+
+Added Accentuated french Characters
+
+![French LED Mini Board](photos/accentuated.gif)
 
 ## Hardware
 
@@ -129,6 +133,10 @@ shows a bicycle crossing the display in left-to-right and right-to-left (as a se
 
 shows a simple animation of a slowly beating heart on the first message, and a blinking heart on the second message.
 
+    ./led-badge-11x44.py -B 50 -m 0 -s 8 "Bonjour à toutes et à tous" "Bienvenu(e)s en Master 2 EEA ISHM" "Ingénierie des systèmes Humains Machines" "Bonne réussite à votre promotion 2023-2024"
+
+![M2 ishm](photos/m2ishm.gif)
+
     python3 ./led-badge-11x44.py --list-names
 
 prints the list of builtin icon names, including :happy: :happy2: :heart: :HEART: :heart2: :HEART2: :fablab: :bicycle: :bicycle_r: :owncloud: ::
@@ -138,36 +146,27 @@ prints the list of builtin icon names, including :happy: :happy2: :heart: :HEART
 prints some condensed help:
 
 <pre>
-usage: led-badge-11x44.py [-h] [-t TYPE] [-s SPEED] [-m MODE] [-b BLINK]
-			  [-a ANTS] [-p FILE] [-l]
-                          MESSAGE [MESSAGE ...]
+usage: led-badge-11x44.py [-h] [-t TYPE] [-s SPEED] [-B BRIGHTNESS] [-m MODE] [-b BLINK] [-a ANTS] [-l] MESSAGE [MESSAGE ...]
 
-Upload messages or graphics to a 44x11 led badge via USB HID.
-Version 0.6 from https://github.com/jnweiger/led-badge-44x11
+Upload messages or graphics to a 11x44 led badge via USB HID.
+Version 0.12 from https://github.com/jnweiger/led-badge-ls32
  -- see there for more examples and for updates.
 
 positional arguments:
-  MESSAGE               Up to 8 message texts with embedded builtin icons or
-                        loaded images within colons(:) -- See -l for a list of
-                        builtins
+  MESSAGE               Up to 8 message texts with embedded builtin icons or loaded images within colons(:) -- See -l for a list of builtins
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
-  -t TYPE, --type TYPE
-			Type of display: supported values are 12x48 or
-			(default) 11x44. Rename the program to led-badge-12x48,
-			to switch the default.
+  -t TYPE, --type TYPE  Type of display: supported values are 12x48 or (default) 11x44. Rename the program to led-badge-12x48, to switch the default.
   -s SPEED, --speed SPEED
-                        Scroll speed (Range 1..8). Up to 8 comma-seperated
-                        values
-  -m MODE, --mode MODE  Up to 8 mode values: Scroll-left(0) -right(1) -up(2)
-                        -down(3); still-centered(4); animation(5); drop-
-                        down(6); curtain(7); laser(8); See '--mode-help' for
-                        more details.
+                        Scroll speed (Range 1..8). Up to 8 comma-separated values
+  -B BRIGHTNESS, --brightness BRIGHTNESS
+                        Brightness for the display in percent: 25, 50, 75, or 100
+  -m MODE, --mode MODE  Up to 8 mode values: Scroll-left(0) -right(1) -up(2) -down(3); still-centered(4); animation(5); drop-down(6); curtain(7);
+                        laser(8); See '--mode-help' for more details.
   -b BLINK, --blink BLINK
-                        1: blinking, 0: normal. Up to 8 comma-seperated values
-  -a ANTS, --ants ANTS  1: animated border, 0: normal. Up to 8 comma-seperated
-                        values
+                        1: blinking, 0: normal. Up to 8 comma-separated values
+  -a ANTS, --ants ANTS  1: animated border, 0: normal. Up to 8 comma-separated values
   -l, --list-names      list named icons to be embedded in messages and exit
 
 Example combining image and text:

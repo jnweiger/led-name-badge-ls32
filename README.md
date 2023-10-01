@@ -149,7 +149,7 @@ prints some condensed help:
 usage: led-badge-11x44.py [-h] [-t TYPE] [-s SPEED] [-B BRIGHTNESS] [-m MODE] [-b BLINK] [-a ANTS] [-l] MESSAGE [MESSAGE ...]
 
 Upload messages or graphics to a 11x44 led badge via USB HID.
-Version 0.12 from https://github.com/jnweiger/led-badge-ls32
+Version 0.12 from https://github.com/jnweiger/led-name-badge-ls32
  -- see there for more examples and for updates.
 
 positional arguments:

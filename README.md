@@ -174,6 +174,8 @@ Example combining image and text:
 </pre>
 
 
+### Animations
+See the gfx/starfield folder for examples. An animation of N frames is provided as an image N*48 pixels wide, for both 48 and 44 pixel wide devices.
 
 ## Related References (for USB-Serial devices)
  * https://github.com/Caerbannog/led-mini-board

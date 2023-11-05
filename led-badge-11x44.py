@@ -247,9 +247,9 @@ charmap = u'ABCDEFGHIJKLMNOPQRSTUVWXYZ' + \
           u"àäòöùüèéêëôöûîïÿç" + \
           u"ÀÅÄÉÈÊËÖÔÜÛÙŸ"
 
-char_offset = {}
+char_offsets = {}
 for i in range(len(charmap)):
-    char_offset[charmap[i]] = 11 * i
+    char_offsets[charmap[i]] = 11 * i
     # print(i, charmap[i], char_offset[charmap[i]])
 
 bitmap_preloaded = [([], 0)]
@@ -320,7 +320,7 @@ def bitmap_char(ch):
         bitmaps_preloaded_unused = False
         return bitmap_preloaded[ord(ch)]
 
-    o = char_offset[ch]
+    o = char_offsets[ch]
     return (font_11x44[o:o + 11], 1)
 
 
@@ -334,7 +334,7 @@ def bitmap_text(text):
       ":gfx/logo.png:" preloads the file gfx/logo.png and is replaced the corresponding control char.
   """
 
-    def colonrepl(m):
+    def replace_symbolic(m):
         name = m.group(1)
         if name == '':
             return ':'
@@ -343,10 +343,9 @@ def bitmap_text(text):
         if '.' in name:
             bitmap_preloaded.append(bitmap_img(name))
             return chr(len(bitmap_preloaded) - 1)
-        b = bitmap_named[name]
-        return b[2]
+        return bitmap_named[name][2]
 
-    text = re.sub(r':([^:]*):', colonrepl, text)
+    text = re.sub(r':([^:]*):', replace_symbolic, text)
     buf = array('B')
     cols = 0
     for c in text:
@@ -391,7 +390,7 @@ def bitmap_img(file):
 
 def bitmap(arg):
     """ if arg is a valid and existing path name, we load it as an image.
-      Otherwise we take it as a string.
+      Otherwise, we take it as a string.
   """
     if os.path.exists(arg):
         return bitmap_img(arg)
@@ -406,7 +405,7 @@ proto_header = (
 )
 
 
-def header(lengths, speeds, modes, blink, ants, brightness=100):
+def header(lengths, speeds, modes, blink, ants, brightness=100, date=datetime.now()):
     """ lengths[0] is the number of chars of the first text
 
       Speeds come in as 1..8, but are needed 0..7 here.
@@ -443,131 +442,132 @@ def header(lengths, speeds, modes, blink, ants, brightness=100):
         h[17 + (2 * i) - 1] = lengths[i] // 256
         h[17 + (2 * i)] = lengths[i] % 256
 
-    cdate = datetime.now()
-    h[38 + 0] = cdate.year % 100
-    h[38 + 1] = cdate.month
-    h[38 + 2] = cdate.day
-    h[38 + 3] = cdate.hour
-    h[38 + 4] = cdate.minute
-    h[38 + 5] = cdate.second
+    h[38 + 0] = date.year % 100
+    h[38 + 1] = date.month
+    h[38 + 2] = date.day
+    h[38 + 3] = date.hour
+    h[38 + 4] = date.minute
+    h[38 + 5] = date.second
 
     return h
 
 
-parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
-                                 description='Upload messages or graphics to a 11x44 led badge via USB HID.\nVersion %s from https://github.com/jnweiger/led-badge-ls32\n -- see there for more examples and for updates.' % __version,
-                                 epilog='Example combining image and text:\n sudo %s "I:HEART2:you"' % sys.argv[0])
-parser.add_argument('-t', '--type', default='11x44',
-                    help="Type of display: supported values are 12x48 or (default) 11x44. Rename the program to led-badge-12x48, to switch the default.")
-parser.add_argument('-s', '--speed', default='4', help="Scroll speed (Range 1..8). Up to 8 comma-separated values")
-parser.add_argument('-B', '--brightness', default='100',
-                    help="Brightness for the display in percent: 25, 50, 75, or 100")
-parser.add_argument('-m', '--mode', default='0',
-                    help="Up to 8 mode values: Scroll-left(0) -right(1) -up(2) -down(3); still-centered(4); animation(5); drop-down(6); curtain(7); laser(8); See '--mode-help' for more details.")
-parser.add_argument('-b', '--blink', default='0', help="1: blinking, 0: normal. Up to 8 comma-separated values")
-parser.add_argument('-a', '--ants', default='0', help="1: animated border, 0: normal. Up to 8 comma-separated values")
-parser.add_argument('-p', '--preload', metavar='FILE', action='append',
-                    help=argparse.SUPPRESS)  # "Load bitmap images. Use ^A, ^B, ^C, ... in text messages to make them visible. Deprecated, embed within ':' instead")
-parser.add_argument('-l', '--list-names', action='version', help="list named icons to be embedded in messages and exit",
-                    version=':' + ':  :'.join(bitmap_named.keys()) + ':  ::  or e.g. :path/to/some_icon.png:')
-parser.add_argument('message', metavar='MESSAGE', nargs='+',
-                    help="Up to 8 message texts with embedded builtin icons or loaded images within colons(:) -- See -l for a list of builtins")
-parser.add_argument('--mode-help', action='version', help=argparse.SUPPRESS, version="""
 
--m 5 "Animation"
-
- Animation frames are 6 character (or 48px) wide. Upload an animation of
- N frames as one image N*48 pixels wide, 11 pixels high.
- Frames run from left to right and repeat endless.
- Speeds [1..8] result in ca. [1.2 1.3 2.0 2.4 2.8 4.5 7.5 15] fps.
-
- Example of a slowly beating heart:
-  sudo %s -s1 -m5 "  :heart2:    :HEART2:"
-
--m 9 "Smooth"
--m 10 "Rotate"
-
- These modes are mentioned in the BMP Badge software.
- Text is shown static, or sometimes (longer texts?) not shown at all.
- One significant difference is: The text of the first message stays visible after
- upload, even if the USB cable remains connected.
- (No "rotation" or "smoothing"(?) effect can be expected, though)
-""" % sys.argv[0])
-args = parser.parse_args()
-if have_pyhidapi:
-    devinfo = pyhidapi.hid_enumerate(0x0416, 0x5020)
-    # dev = pyhidapi.hid_open(0x0416, 0x5020)
-else:
-    dev = usb.core.find(idVendor=0x0416, idProduct=0x5020)
-
-if have_pyhidapi:
-    if devinfo:
-        dev = pyhidapi.hid_open_path(devinfo[0].path)
-        print("using [%s %s] int=%d page=%s via pyHIDAPI" % (
-        devinfo[0].manufacturer_string, devinfo[0].product_string, devinfo[0].interface_number, devinfo[0].usage_page))
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
+                                     description='Upload messages or graphics to a 11x44 led badge via USB HID.\nVersion %s from https://github.com/jnweiger/led-badge-ls32\n -- see there for more examples and for updates.' % __version,
+                                     epilog='Example combining image and text:\n sudo %s "I:HEART2:you"' % sys.argv[0])
+    parser.add_argument('-t', '--type', default='11x44',
+                        help="Type of display: supported values are 12x48 or (default) 11x44. Rename the program to led-badge-12x48, to switch the default.")
+    parser.add_argument('-s', '--speed', default='4', help="Scroll speed (Range 1..8). Up to 8 comma-separated values")
+    parser.add_argument('-B', '--brightness', default='100',
+                        help="Brightness for the display in percent: 25, 50, 75, or 100")
+    parser.add_argument('-m', '--mode', default='0',
+                        help="Up to 8 mode values: Scroll-left(0) -right(1) -up(2) -down(3); still-centered(4); animation(5); drop-down(6); curtain(7); laser(8); See '--mode-help' for more details.")
+    parser.add_argument('-b', '--blink', default='0', help="1: blinking, 0: normal. Up to 8 comma-separated values")
+    parser.add_argument('-a', '--ants', default='0', help="1: animated border, 0: normal. Up to 8 comma-separated values")
+    parser.add_argument('-p', '--preload', metavar='FILE', action='append',
+                        help=argparse.SUPPRESS)  # "Load bitmap images. Use ^A, ^B, ^C, ... in text messages to make them visible. Deprecated, embed within ':' instead")
+    parser.add_argument('-l', '--list-names', action='version', help="list named icons to be embedded in messages and exit",
+                        version=':' + ':  :'.join(bitmap_named.keys()) + ':  ::  or e.g. :path/to/some_icon.png:')
+    parser.add_argument('message', metavar='MESSAGE', nargs='+',
+                        help="Up to 8 message texts with embedded builtin icons or loaded images within colons(:) -- See -l for a list of builtins")
+    parser.add_argument('--mode-help', action='version', help=argparse.SUPPRESS, version="""
+    
+    -m 5 "Animation"
+    
+     Animation frames are 6 character (or 48px) wide. Upload an animation of
+     N frames as one image N*48 pixels wide, 11 pixels high.
+     Frames run from left to right and repeat endless.
+     Speeds [1..8] result in ca. [1.2 1.3 2.0 2.4 2.8 4.5 7.5 15] fps.
+    
+     Example of a slowly beating heart:
+      sudo %s -s1 -m5 "  :heart2:    :HEART2:"
+    
+    -m 9 "Smooth"
+    -m 10 "Rotate"
+    
+     These modes are mentioned in the BMP Badge software.
+     Text is shown static, or sometimes (longer texts?) not shown at all.
+     One significant difference is: The text of the first message stays visible after
+     upload, even if the USB cable remains connected.
+     (No "rotation" or "smoothing"(?) effect can be expected, though)
+    """ % sys.argv[0])
+    args = parser.parse_args()
+    if have_pyhidapi:
+        devinfo = pyhidapi.hid_enumerate(0x0416, 0x5020)
+        # dev = pyhidapi.hid_open(0x0416, 0x5020)
     else:
-        print("No led tag with vendorID 0x0416 and productID 0x5020 found.")
-        print("Connect the led tag and run this tool as root.")
+        dev = usb.core.find(idVendor=0x0416, idProduct=0x5020)
+
+    if have_pyhidapi:
+        if devinfo:
+            dev = pyhidapi.hid_open_path(devinfo[0].path)
+            print("using [%s %s] int=%d page=%s via pyHIDAPI" % (
+            devinfo[0].manufacturer_string, devinfo[0].product_string, devinfo[0].interface_number, devinfo[0].usage_page))
+        else:
+            print("No led tag with vendorID 0x0416 and productID 0x5020 found.")
+            print("Connect the led tag and run this tool as root.")
+            sys.exit(1)
+    else:
+        if dev is None:
+            print("No led tag with vendorID 0x0416 and productID 0x5020 found.")
+            print("Connect the led tag and run this tool as root.")
+            sys.exit(1)
+        try:
+            # win32: NotImplementedError: is_kernel_driver_active
+            if dev.is_kernel_driver_active(0):
+                dev.detach_kernel_driver(0)
+        except:
+            pass
+        dev.set_configuration()
+        print("using [%s %s] bus=%d dev=%d" % (dev.manufacturer, dev.product, dev.bus, dev.address))
+
+    if args.preload:
+        for file in args.preload:
+            bitmap_preloaded.append(bitmap_img(file))
+            bitmaps_preloaded_unused = True
+
+    msg_bitmaps = []
+    for msg_arg in args.message:
+        msg_bitmaps.append(bitmap(msg_arg))
+
+    if bitmaps_preloaded_unused == True:
+        print(
+            "\nWARNING:\n Your preloaded images are not used.\n Try without '-p' or embed the control character '^A' in your message.\n")
+
+    if '12' in args.type or '12' in sys.argv[0]:
+        print("Type: 12x48")
+        for msg_bitmap in msg_bitmaps:
+            # trivial hack to support 12x48 badges:
+            # patch extra empty lines into the message stream.
+            for o in reversed(range(1, int(len(msg_bitmap[0]) / 11) + 1)):
+                msg_bitmap[0][o * 11:o * 11] = array('B', [0])
+    else:
+        print("Type: 11x44")
+
+    buf = array('B')
+    buf.extend(header(list(map(lambda x: x[1], msg_bitmaps)), args.speed, args.mode, args.blink, args.ants, int(args.brightness)))
+
+    for msg_bitmap in msg_bitmaps:
+        buf.extend(msg_bitmap[0])
+
+    need_padding = len(buf) % 64
+    if need_padding:
+        buf.extend((0,) * (64 - need_padding))
+
+    # print(buf)      # array('B', [119, 97, 110, 103, 0, 0, 0, 0, 48, 48, 48, 48, 48, 48, 48, 48, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 60, 126, 255, 255, 255, 255, 126, 60, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+
+    if len(buf) > 8192:
+        print("Writing more than 8192 bytes damages the display!")
         sys.exit(1)
-else:
-    if dev is None:
-        print("No led tag with vendorID 0x0416 and productID 0x5020 found.")
-        print("Connect the led tag and run this tool as root.")
-        sys.exit(1)
-    try:
-        # win32: NotImplementedError: is_kernel_driver_active
-        if dev.is_kernel_driver_active(0):
-            dev.detach_kernel_driver(0)
-    except:
-        pass
-    dev.set_configuration()
-    print("using [%s %s] bus=%d dev=%d" % (dev.manufacturer, dev.product, dev.bus, dev.address))
 
-if args.preload:
-    for file in args.preload:
-        bitmap_preloaded.append(bitmap_img(file))
-        bitmaps_preloaded_unused = True
+    if have_pyhidapi:
+        pyhidapi.hid_write(dev, buf)
+    else:
+        for i in range(int(len(buf) / 64)):
+            time.sleep(0.1)
+            dev.write(1, buf[i * 64:i * 64 + 64])
 
-msgs = []
-for arg in args.message:
-    msgs.append(bitmap(arg))
-
-if bitmaps_preloaded_unused == True:
-    print(
-        "\nWARNING:\n Your preloaded images are not used.\n Try without '-p' or embed the control character '^A' in your message.\n")
-
-if '12' in args.type or '12' in sys.argv[0]:
-    print("Type: 12x48")
-    for msg in msgs:
-        # trivial hack to support 12x48 badges:
-        # patch extra empty lines into the message stream.
-        for o in reversed(range(1, int(len(msg[0]) / 11) + 1)):
-            msg[0][o * 11:o * 11] = array('B', [0])
-else:
-    print("Type: 11x44")
-
-buf = array('B')
-buf.extend(header(list(map(lambda x: x[1], msgs)), args.speed, args.mode, args.blink, args.ants, int(args.brightness)))
-
-for msg in msgs:
-    buf.extend(msg[0])
-
-needpadding = len(buf) % 64
-if needpadding:
-    buf.extend((0,) * (64 - needpadding))
-
-# print(buf)      # array('B', [119, 97, 110, 103, 0, 0, 0, 0, 48, 48, 48, 48, 48, 48, 48, 48, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 60, 126, 255, 255, 255, 255, 126, 60, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-
-if len(buf) > 8192:
-    print("Writing more than 8192 bytes damages the display!")
-    sys.exit(1)
-
-if have_pyhidapi:
-    pyhidapi.hid_write(dev, buf)
-else:
-    for i in range(int(len(buf) / 64)):
-        time.sleep(0.1)
-        dev.write(1, buf[i * 64:i * 64 + 64])
-
-if have_pyhidapi:
-    pyhidapi.hid_close(dev)
+    if have_pyhidapi:
+        pyhidapi.hid_close(dev)

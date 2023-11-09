@@ -397,32 +397,30 @@ def bitmap(arg):
     return bitmap_text(arg)
 
 
-proto_header = (
-    0x77, 0x61, 0x6e, 0x67, 0x00, 0x00, 0x00, 0x00, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-)
+def expand_tuple(l):
+    l = l + (l[-1],) * (8 - len(l))  # repeat last element
+    return l
 
-
-def header(lengths, speeds, modes, blink, ants, brightness=100, date=datetime.now()):
+def header(lengths, speeds, modes, blinks, ants, brightness=100, date=datetime.now()):
     """ lengths[0] is the number of chars of the first text
 
       Speeds come in as 1..8, but are needed 0..7 here.
   """
-    a = [int(x) for x in re.split(r'[\s,]+', ants)]
-    a = a + [a[-1]] * (8 - len(a))  # repeat last element
+    protocol_header_template = (
+        0x77, 0x61, 0x6e, 0x67, 0x00, 0x00, 0x00, 0x00, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+    )
 
-    b = [int(x) for x in re.split(r'[\s,]+', blink)]
-    b = b + [b[-1]] * (8 - len(b))  # repeat last element
+    ants = expand_tuple(ants)
+    blinks = expand_tuple(blinks)
+    speeds = expand_tuple(speeds)
+    modes = expand_tuple(modes)
 
-    s = [int(x) - 1 for x in re.split(r'[\s,]+', speeds)]
-    s = s + [s[-1]] * (8 - len(s))  # repeat last element
+    speeds = [x - 1 for x in speeds]
 
-    m = [int(x) for x in re.split(r'[\s,]+', modes)]
-    m = m + [m[-1]] * (8 - len(m))  # repeat last element
-
-    h = list(proto_header)
+    h = list(protocol_header_template)
 
     if brightness <= 25:
         h[5] = 0x40
@@ -432,11 +430,11 @@ def header(lengths, speeds, modes, blink, ants, brightness=100, date=datetime.no
         h[5] = 0x10
 
     for i in range(8):
-        h[6] += b[i] << i
-        h[7] += a[i] << i
+        h[6] += blinks[i] << i
+        h[7] += ants[i] << i
 
     for i in range(8):
-        h[8 + i] = 16 * s[i] + m[i]
+        h[8 + i] = 16 * speeds[i] + modes[i]
 
     for i in range(len(lengths)):
         h[17 + (2 * i) - 1] = lengths[i] // 256
@@ -451,6 +449,9 @@ def header(lengths, speeds, modes, blink, ants, brightness=100, date=datetime.no
 
     return h
 
+
+def split_to_ints(list_str):
+    return [int(x) for x in re.split(r'[\s,]+', list_str)]
 
 
 if __name__ == '__main__':
@@ -546,8 +547,15 @@ if __name__ == '__main__':
     else:
         print("Type: 11x44")
 
+    lengths = [b[1] for b in msg_bitmaps]
+    speeds = split_to_ints(args.speeds)
+    modes = split_to_ints(args.mode)
+    blinks = split_to_ints(args.blink)
+    ants = split_to_ints(args.ants)
+    brightness = int(args.brightness)
+
     buf = array('B')
-    buf.extend(header(list(map(lambda x: x[1], msg_bitmaps)), args.speed, args.mode, args.blink, args.ants, int(args.brightness)))
+    buf.extend(header(lengths, speeds, modes, blinks, ants, brightness))
 
     for msg_bitmap in msg_bitmaps:
         buf.extend(msg_bitmap[0])

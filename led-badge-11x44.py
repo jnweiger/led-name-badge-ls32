@@ -49,39 +49,22 @@
 # v0.11, 2019-09-29, jw New option --brightness added.
 # v0.12, 2019-12-27, jw hint at pip3 -- as discussed in https://github.com/jnweiger/led-name-badge-ls32/issues/19
 
-import sys, os, re, time, argparse
-from datetime import datetime
+import argparse
+import os
+import re
+import sys
+import time
 from array import array
+from datetime import datetime
 
 try:
-    if sys.version_info[0] < 3: raise Exception(
-        "prefer usb.core with python-2.x because of https://github.com/jnweiger/led-badge-ls32/issues/9")
     import pyhidapi
-
-    pyhidapi.hid_init()
-    have_pyhidapi = True
 except:
-    have_pyhidapi = False
-    try:
-        import usb.core
-    except:
-        print("ERROR: Need the pyhidapi or usb.core module.")
-        if sys.platform == "darwin":
-            print("""Please try
-  pip3 install pyhidapi
-  pip install pyhidapi
-  brew install hidapi""")
-        elif sys.platform == "linux":
-            print("""Please try
-  sudo pip3 install pyhidapi
-  sudo pip install pyhidapi
-  sudo apt-get install libhidapi-hidraw0
-  sudo ln -s /usr/lib/x86_64-linux-gnu/libhidapi-hidraw.so.0  /usr/local/lib/
-or
-  sudo apt-get install python3-usb""")
-        else:  # windows?
-            print("""Please with Linux or MacOS or help us implement support for """ + sys.platform)
-        sys.exit(1)
+    pass
+try:
+    import usb.core
+except:
+    pass
 
 __version = "0.12"
 
@@ -311,7 +294,7 @@ def bitmap_char(ch):
     """ Returns a tuple of 11 bytes,
       ch = '_' returns (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255)
       The bits in each byte are horizontal, highest bit is left.
-  """
+    """
     if ord(ch) < 32:
         if ch in bitmap_builtin:
             return bitmap_builtin[ch][:2]
@@ -397,62 +380,143 @@ def bitmap(arg):
     return bitmap_text(arg)
 
 
-def expand_tuple(l):
-    l = l + (l[-1],) * (8 - len(l))  # repeat last element
-    return l
-
-def header(lengths, speeds, modes, blinks, ants, brightness=100, date=datetime.now()):
-    """ lengths[0] is the number of chars of the first text
-
-      Speeds come in as 1..8, but are needed 0..7 here.
-  """
-    protocol_header_template = (
+class LedNameBadge:
+    _protocol_header_template = (
         0x77, 0x61, 0x6e, 0x67, 0x00, 0x00, 0x00, 0x00, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
     )
+    _have_pyhidapi = False
 
-    ants = expand_tuple(ants)
-    blinks = expand_tuple(blinks)
-    speeds = expand_tuple(speeds)
-    modes = expand_tuple(modes)
+    @staticmethod
+    def init_class():
+        try:
+            if sys.version_info[0] < 3:
+                raise Exception("prefer usb.core with python-2.x because of https://github.com/jnweiger/led-badge-ls32/issues/9")
+            if pyhidapi:
+                pyhidapi.hid_init()
+                LedNameBadge._have_pyhidapi = True
+                print("Pyhidapi detected")
+            else:
+                raise Exception()
+        except Exception as e:
+            try:
+                if usb.core:
+                    print("Pyusb detected")
+                else:
+                    raise Exception()
+            except:
+                print("ERROR: Need the pyhidapi or usb.core module.")
+                if sys.platform == "darwin":
+                    print("""Please try
+  pip3 install pyhidapi
+  pip install pyhidapi
+  brew install hidapi
+""")
+                elif sys.platform == "linux":
+                    print("""Please try
+  sudo pip3 install pyhidapi
+  sudo pip install pyhidapi
+  sudo apt-get install libhidapi-hidraw0
+  sudo ln -s /usr/lib/x86_64-linux-gnu/libhidapi-hidraw.so.0  /usr/local/lib/
+or
+  sudo apt-get install python3-usb
+""")
+                else:  # windows?
+                    print("""Please with Linux or MacOS or help us implement support for """ + sys.platform)
+                sys.exit(1)
 
-    speeds = [x - 1 for x in speeds]
+    @staticmethod
+    def _expand_tuple(l):
+        l = l + (l[-1],) * (8 - len(l))  # repeat last element
+        return l
 
-    h = list(protocol_header_template)
+    @staticmethod
+    def header(lengths, speeds, modes, blinks, ants, brightness=100, date=datetime.now()):
+        """ lengths[0] is the number of chars of the first text
 
-    if brightness <= 25:
-        h[5] = 0x40
-    elif brightness <= 50:
-        h[5] = 0x20
-    elif brightness <= 75:
-        h[5] = 0x10
+          Speeds come in as 1..8, but are needed 0..7 here.
+        """
+        ants = LedNameBadge._expand_tuple(ants)
+        blinks = LedNameBadge._expand_tuple(blinks)
+        speeds = LedNameBadge._expand_tuple(speeds)
+        modes = LedNameBadge._expand_tuple(modes)
 
-    for i in range(8):
-        h[6] += blinks[i] << i
-        h[7] += ants[i] << i
+        speeds = [x - 1 for x in speeds]
 
-    for i in range(8):
-        h[8 + i] = 16 * speeds[i] + modes[i]
+        h = list(LedNameBadge._protocol_header_template)
 
-    for i in range(len(lengths)):
-        h[17 + (2 * i) - 1] = lengths[i] // 256
-        h[17 + (2 * i)] = lengths[i] % 256
+        if brightness <= 25:
+            h[5] = 0x40
+        elif brightness <= 50:
+            h[5] = 0x20
+        elif brightness <= 75:
+            h[5] = 0x10
 
-    h[38 + 0] = date.year % 100
-    h[38 + 1] = date.month
-    h[38 + 2] = date.day
-    h[38 + 3] = date.hour
-    h[38 + 4] = date.minute
-    h[38 + 5] = date.second
+        for i in range(8):
+            h[6] += blinks[i] << i
+            h[7] += ants[i] << i
 
-    return h
+        for i in range(8):
+            h[8 + i] = 16 * speeds[i] + modes[i]
+
+        for i in range(len(lengths)):
+            h[17 + (2 * i) - 1] = lengths[i] // 256
+            h[17 + (2 * i)] = lengths[i] % 256
+
+        h[38 + 0] = date.year % 100
+        h[38 + 1] = date.month
+        h[38 + 2] = date.day
+        h[38 + 3] = date.hour
+        h[38 + 4] = date.minute
+        h[38 + 5] = date.second
+
+        return h
+
+    @staticmethod
+    def write(buf):
+        if len(buf) > 8192:
+            print("Writing more than 8192 bytes damages the display!")
+            sys.exit(1)
+
+        if LedNameBadge._have_pyhidapi:
+            dev_info = pyhidapi.hid_enumerate(0x0416, 0x5020)
+            # dev = pyhidapi.hid_open(0x0416, 0x5020)
+            if dev_info:
+                dev = pyhidapi.hid_open_path(dev_info[0].path)
+                print("using [%s %s] int=%d page=%s via pyHIDAPI" % (
+                    dev_info[0].manufacturer_string, dev_info[0].product_string, dev_info[0].interface_number, dev_info[0].usage_page))
+            else:
+                print("No led tag with vendorID 0x0416 and productID 0x5020 found.")
+                print("Connect the led tag and run this tool as root.")
+                sys.exit(1)
+            pyhidapi.hid_write(dev, buf)
+            pyhidapi.hid_close(dev)
+        else:
+            dev = usb.core.find(idVendor=0x0416, idProduct=0x5020)
+            if dev is None:
+                print("No led tag with vendorID 0x0416 and productID 0x5020 found.")
+                print("Connect the led tag and run this tool as root.")
+                sys.exit(1)
+            try:
+                # win32: NotImplementedError: is_kernel_driver_active
+                if dev.is_kernel_driver_active(0):
+                    dev.detach_kernel_driver(0)
+            except:
+                pass
+            dev.set_configuration()
+            print("using [%s %s] bus=%d dev=%d" % (dev.manufacturer, dev.product, dev.bus, dev.address))
+            for i in range(int(len(buf) / 64)):
+                time.sleep(0.1)
+                dev.write(1, buf[i * 64:i * 64 + 64])
+
+
+LedNameBadge.init_class()
 
 
 def split_to_ints(list_str):
-    return [int(x) for x in re.split(r'[\s,]+', list_str)]
-
+    return tuple([int(x) for x in re.split(r'[\s,]+', list_str)])
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -519,15 +583,15 @@ if __name__ == '__main__':
     else:
         print("Type: 11x44")
 
-    lengths = [b[1] for b in msg_bitmaps]
-    speeds = split_to_ints(args.speeds)
+    lengths = tuple([b[1] for b in msg_bitmaps])
+    speeds = split_to_ints(args.speed)
     modes = split_to_ints(args.mode)
     blinks = split_to_ints(args.blink)
     ants = split_to_ints(args.ants)
     brightness = int(args.brightness)
 
     buf = array('B')
-    buf.extend(header(lengths, speeds, modes, blinks, ants, brightness))
+    buf.extend(LedNameBadge.header(lengths, speeds, modes, blinks, ants, brightness))
 
     for msg_bitmap in msg_bitmaps:
         buf.extend(msg_bitmap[0])
@@ -536,39 +600,4 @@ if __name__ == '__main__':
     if need_padding:
         buf.extend((0,) * (64 - need_padding))
 
-    # print(buf)      # array('B', [119, 97, 110, 103, 0, 0, 0, 0, 48, 48, 48, 48, 48, 48, 48, 48, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 60, 126, 255, 255, 255, 255, 126, 60, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-
-    if len(buf) > 8192:
-        print("Writing more than 8192 bytes damages the display!")
-        sys.exit(1)
-
-    if have_pyhidapi:
-        devinfo = pyhidapi.hid_enumerate(0x0416, 0x5020)
-        # dev = pyhidapi.hid_open(0x0416, 0x5020)
-        if devinfo:
-            dev = pyhidapi.hid_open_path(devinfo[0].path)
-            print("using [%s %s] int=%d page=%s via pyHIDAPI" % (
-            devinfo[0].manufacturer_string, devinfo[0].product_string, devinfo[0].interface_number, devinfo[0].usage_page))
-        else:
-            print("No led tag with vendorID 0x0416 and productID 0x5020 found.")
-            print("Connect the led tag and run this tool as root.")
-            sys.exit(1)
-        pyhidapi.hid_write(dev, buf)
-        pyhidapi.hid_close(dev)
-    else:
-        dev = usb.core.find(idVendor=0x0416, idProduct=0x5020)
-        if dev is None:
-            print("No led tag with vendorID 0x0416 and productID 0x5020 found.")
-            print("Connect the led tag and run this tool as root.")
-            sys.exit(1)
-        try:
-            # win32: NotImplementedError: is_kernel_driver_active
-            if dev.is_kernel_driver_active(0):
-                dev.detach_kernel_driver(0)
-        except:
-            pass
-        dev.set_configuration()
-        print("using [%s %s] bus=%d dev=%d" % (dev.manufacturer, dev.product, dev.bus, dev.address))
-        for i in range(int(len(buf) / 64)):
-            time.sleep(0.1)
-            dev.write(1, buf[i * 64:i * 64 + 64])
+    LedNameBadge.write(buf)

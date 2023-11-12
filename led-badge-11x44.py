@@ -57,6 +57,8 @@ import time
 from array import array
 from datetime import datetime
 
+# There are 2 possibilities for accessing the device: using hidapi oer usb-core. Here we just try to import both
+# and decide later which one to use, see below in LedNameBadge._init_class().
 try:
     import pyhidapi
 except:

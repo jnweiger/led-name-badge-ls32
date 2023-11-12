@@ -18,12 +18,12 @@ class Test(TestCase):
 
     def test_header_8msgs(self):
         buf = testee.LedNameBadge.header((1, 2, 3, 4, 5, 6, 7, 8),
-                            (1, 2, 3, 4, 5, 6, 7, 8),
-                            (1, 2, 3, 4, 5, 6, 7, 8),
-                            (0, 1, 0, 1, 0, 1, 0, 1),
-                            (1, 0, 1, 0, 1, 0, 1, 0),
-                            25,
-                            self.test_date)
+                                         (1, 2, 3, 4, 5, 6, 7, 8),
+                                         (1, 2, 3, 4, 5, 6, 7, 8),
+                                         (0, 1, 0, 1, 0, 1, 0, 1),
+                                         (1, 0, 1, 0, 1, 0, 1, 0),
+                                         25,
+                                         self.test_date)
         self.assertEqual([119, 97, 110, 103, 0, 64, 170, 85, 1, 18, 35, 52, 69, 86, 103, 120, 0, 1, 0, 2, 0, 3, 0, 4, 0,
                           5, 0, 6, 0, 7, 0, 8, 0, 0, 0, 0, 0, 0, 22, 11, 13, 17, 38, 24, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                           0, 0, 0, 0, 0, 0, 0, 0, 0, 0], buf)
@@ -54,15 +54,29 @@ class Test(TestCase):
         self.assertNotEqual(buf1[38:38 + 6], buf2[38:38 + 6])
 
     def test_bitmap_png(self):
-        buf = testee.bitmap("resources/bitpatterns.png")
+        creator = testee.SimpleTextAndIcons()
+        buf = creator.bitmap("resources/bitpatterns.png")
         self.assertEqual((array('B',
                                 [128, 64, 32, 16, 8, 4, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 128, 64, 32, 0, 1, 2, 3,
                                  4, 5, 15, 31, 63, 127, 255]),
                           3), buf)
 
     def test_bitmap_text(self):
-        buf = testee.bitmap("/:HEART2:\\")
+        creator = testee.SimpleTextAndIcons()
+        buf = creator.bitmap("/:HEART2:\\")
         self.assertEqual((array('B',
                                 [0, 0, 2, 6, 12, 24, 48, 96, 192, 128, 0, 0, 12, 30, 63, 63, 63, 31, 15, 7, 3, 1, 0, 96,
                                  240, 248, 248, 248, 240, 224, 192, 128, 0, 0, 128, 192, 96, 48, 24, 12, 6, 2, 0, 0]),
                           4), buf)
+
+    def test_preload(self):
+        creator = testee.SimpleTextAndIcons()
+        self.assertFalse(creator.are_preloaded_unused())
+        creator.add_preload_img("resources/bitpatterns.png")
+        self.assertTrue(creator.are_preloaded_unused())
+        buf = creator.bitmap("\x01")
+        self.assertFalse(creator.are_preloaded_unused())
+        self.assertEqual((array('B',
+                                [128, 64, 32, 16, 8, 4, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 128, 64, 32, 0, 1, 2, 3,
+                                 4, 5, 15, 31, 63, 127, 255]),
+                          3), buf)

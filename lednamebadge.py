@@ -225,6 +225,7 @@ class SimpleTextAndIcons:
               u"ÀÅÄÉÈÊËÖÔÜÛÙŸ"
 
     char_offsets = {}
+    pass
     for i in range(len(charmap)):
         char_offsets[charmap[i]] = 11 * i
         # print(i, charmap[i], char_offset[charmap[i]])
@@ -522,7 +523,7 @@ or
 def split_to_ints(list_str):
     return tuple([int(x) for x in re.split(r'[\s,]+', list_str)])
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
                                      description='Upload messages or graphics to a 11x44 led badge via USB HID.\nVersion %s from https://github.com/jnweiger/led-badge-ls32\n -- see there for more examples and for updates.' % __version,
                                      epilog='Example combining image and text:\n sudo %s "I:HEART2:you"' % sys.argv[0])
@@ -606,3 +607,7 @@ if __name__ == '__main__':
         buf.extend((0,) * (64 - need_padding))
 
     LedNameBadge.write(buf)
+
+
+if __name__ == '__main__':
+    main()

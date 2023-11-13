@@ -402,6 +402,7 @@ class LedNameBadge:
 
     try:
         if sys.version_info[0] < 3:
+            print("Preferring Pyusb over Pyhidapi with Python 2.x")
             raise Exception("Prefer usb.core with python-2.x because of https://github.com/jnweiger/led-badge-ls32/issues/9")
         import pyhidapi
         pyhidapi.hid_init()

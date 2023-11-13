@@ -1,0 +1,3 @@
+import lednamebadge
+
+lednamebadge.main()

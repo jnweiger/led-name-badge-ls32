@@ -57,16 +57,6 @@ import time
 from array import array
 from datetime import datetime
 
-# There are 2 possibilities for accessing the device: using hidapi oer usb-core. Here we just try to import both
-# and decide later which one to use, see below in LedNameBadge._init_class().
-try:
-    import pyhidapi
-except:
-    pass
-try:
-    import usb.core
-except:
-    pass
 
 __version = "0.12"
 
@@ -409,34 +399,27 @@ class LedNameBadge:
     )
     _have_pyhidapi = False
 
-
-    @staticmethod
-    def init_class():
+    try:
+        if sys.version_info[0] < 3:
+            raise Exception("Prefer usb.core with python-2.x because of https://github.com/jnweiger/led-badge-ls32/issues/9")
+        import pyhidapi
+        pyhidapi.hid_init()
+        _have_pyhidapi = True
+        print("Pyhidapi detected")
+    except Exception:
         try:
-            if sys.version_info[0] < 3:
-                raise Exception("prefer usb.core with python-2.x because of https://github.com/jnweiger/led-badge-ls32/issues/9")
-            if pyhidapi:
-                pyhidapi.hid_init()
-                LedNameBadge._have_pyhidapi = True
-                print("Pyhidapi detected")
-            else:
-                raise Exception()
-        except Exception as e:
-            try:
-                if usb.core:
-                    print("Pyusb detected")
-                else:
-                    raise Exception()
-            except:
-                print("ERROR: Need the pyhidapi or usb.core module.")
-                if sys.platform == "darwin":
-                    print("""Please try
+            import usb.core
+            print("Pyusb detected")
+        except:
+            print("ERROR: Need the pyhidapi or usb.core module.")
+            if sys.platform == "darwin":
+                print("""Please try
   pip3 install pyhidapi
   pip install pyhidapi
   brew install hidapi
 """)
-                elif sys.platform == "linux":
-                    print("""Please try
+            elif sys.platform == "linux":
+                print("""Please try
   sudo pip3 install pyhidapi
   sudo pip install pyhidapi
   sudo apt-get install libhidapi-hidraw0
@@ -444,9 +427,9 @@ class LedNameBadge:
 or
   sudo apt-get install python3-usb
 """)
-                else:  # windows?
-                    print("""Please with Linux or MacOS or help us implement support for """ + sys.platform)
-                sys.exit(1)
+            else:  # windows?
+                print("""Please with Linux or MacOS or help us implement support for """ + sys.platform)
+            sys.exit(1)
 
 
     @staticmethod
@@ -505,20 +488,20 @@ or
             sys.exit(1)
 
         if LedNameBadge._have_pyhidapi:
-            dev_info = pyhidapi.hid_enumerate(0x0416, 0x5020)
+            dev_info = LedNameBadge.pyhidapi.hid_enumerate(0x0416, 0x5020)
             # dev = pyhidapi.hid_open(0x0416, 0x5020)
             if dev_info:
-                dev = pyhidapi.hid_open_path(dev_info[0].path)
+                dev = LedNameBadge.pyhidapi.hid_open_path(dev_info[0].path)
                 print("using [%s %s] int=%d page=%s via pyHIDAPI" % (
                     dev_info[0].manufacturer_string, dev_info[0].product_string, dev_info[0].interface_number, dev_info[0].usage_page))
             else:
                 print("No led tag with vendorID 0x0416 and productID 0x5020 found.")
                 print("Connect the led tag and run this tool as root.")
                 sys.exit(1)
-            pyhidapi.hid_write(dev, buf)
-            pyhidapi.hid_close(dev)
+            LedNameBadge.pyhidapi.hid_write(dev, buf)
+            LedNameBadge.pyhidapi.hid_close(dev)
         else:
-            dev = usb.core.find(idVendor=0x0416, idProduct=0x5020)
+            dev = LedNameBadge.usb.core.find(idVendor=0x0416, idProduct=0x5020)
             if dev is None:
                 print("No led tag with vendorID 0x0416 and productID 0x5020 found.")
                 print("Connect the led tag and run this tool as root.")
@@ -534,9 +517,6 @@ or
             for i in range(int(len(buf) / 64)):
                 time.sleep(0.1)
                 dev.write(1, buf[i * 64:i * 64 + 64])
-
-
-LedNameBadge.init_class()
 
 
 def split_to_ints(list_str):

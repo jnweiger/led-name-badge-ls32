@@ -206,6 +206,7 @@ The method `header()` takes a number of parameters:
 Your own content has to be a byte array with the bitmap data for all scenes. Of course, it has to fit the given lengths.
 
 See the following graphic for better understanding:
+
 ![bitmap_data_onebyte.png](photos%2Fbitmap_data_onebyte.png)
 
 ![bitmap_data_onescene.png](photos%2Fbitmap_data_onescene.png)

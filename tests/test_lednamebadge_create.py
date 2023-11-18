@@ -1,4 +1,3 @@
-import datetime
 from array import array
 from unittest import TestCase
 

@@ -48,6 +48,19 @@
 # v0.10, 2019-09-09, jw Support for loading monochrome images. Typos fixed.
 # v0.11, 2019-09-29, jw New option --brightness added.
 # v0.12, 2019-12-27, jw hint at pip3 -- as discussed in https://github.com/jnweiger/led-name-badge-ls32/issues/19
+# v0.13, 2023-11-14, bs modularization.
+#     Some comments about this big change:
+#     * I wanted to keep this one-python-file-for-complete-command-line-usage, but also needed to introduce importable
+#       classes for writing own content to the device (my upcoming GUI editor). Therefore, the file was renamed to an
+#       importable python file, and forwarding python files are introduced with the old file names for full
+#       compatibility.
+#     * A bit of code rearranging and cleanup was necessary for that goal, but I hope the original parts are still
+#       recognizable, as I tried to keep all this refactoring as less, as possible and sense-making, but did not do
+#       the full clean-codish refactoring. Keeping the classes in one file is part of that refactoring-omittance.
+#     * There is some initialization code executed in the classes not needed, if not imported. This is nagging me
+#       somehow, but it is acceptable, as we do not need to save every processor cycle, here :)
+#     * Have fun!
+
 
 import argparse
 import os
@@ -58,7 +71,7 @@ from array import array
 from datetime import datetime
 
 
-__version = "0.12"
+__version = "0.13"
 
 
 class SimpleTextAndIcons:
@@ -225,7 +238,6 @@ class SimpleTextAndIcons:
               u"ÀÅÄÉÈÊËÖÔÜÛÙŸ"
 
     char_offsets = {}
-    pass
     for i in range(len(charmap)):
         char_offsets[charmap[i]] = 11 * i
         # print(i, charmap[i], char_offset[charmap[i]])
@@ -288,23 +300,25 @@ class SimpleTextAndIcons:
         self.bitmaps_preloaded_unused = False
 
     def add_preload_img(self, filename):
+        """Still used by main, but deprecated. PLease use ":"-notation for bitmap() / bitmap_text()"""
         self.bitmap_preloaded.append(SimpleTextAndIcons.bitmap_img(filename))
         self.bitmaps_preloaded_unused = True
 
 
     def are_preloaded_unused(self):
+        """Still used by main, but deprecated. PLease use ":"-notation for bitmap() / bitmap_text()"""
         return self.bitmaps_preloaded_unused == True
 
 
     @staticmethod
-    def get_named_bitmaps_keys():
+    def _get_named_bitmaps_keys():
         return SimpleTextAndIcons.bitmap_named.keys()
 
 
     def bitmap_char(self, ch):
-        """ Returns a tuple of 11 bytes,
-          ch = '_' returns (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255)
-          The bits in each byte are horizontal, highest bit is left.
+        """Returns a tuple of 11 bytes, it is the bitmap data of given character.
+            Example: ch = '_' returns (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255).
+            The bits in each byte are horizontal, highest bit is left.
         """
         if ord(ch) < 32:
             if ch in SimpleTextAndIcons.bitmap_builtin:
@@ -318,7 +332,7 @@ class SimpleTextAndIcons:
 
 
     def bitmap_text(self, text):
-        """ returns a tuple of (buffer, length_in_byte_columns_aka_chars)
+        """Returns a tuple of (buffer, length_in_byte_columns_aka_chars)
           We preprocess the text string for substitution patterns
           "::" is replaced with a single ":"
           ":1: is replaced with CTRL-A referencing the first preloaded or loaded image.
@@ -350,7 +364,10 @@ class SimpleTextAndIcons:
 
     @staticmethod
     def bitmap_img(file):
-        """ returns a tuple of (buffer, length_in_byte_columns)
+        """Returns a tuple of (buffer, length_in_byte_columns) representing the given image file.
+            It has to be an 8-bit grayscale image or a color image with 8 bit per channel. Color pixels are converted to
+            grayscale by arithmetic mean. Threshold for an active led is then > 127.
+            If the width is not a multiple on 8 it will be padded with empty pixel-columns.
         """
         from PIL import Image
 
@@ -383,8 +400,8 @@ class SimpleTextAndIcons:
 
 
     def bitmap(self, arg):
-        """ if arg is a valid and existing path name, we load it as an image.
-          Otherwise, we take it as a string.
+        """If arg is a valid and existing path name, we load it as an image.
+            Otherwise, we take it as a string (with ":"-notation, see bitmap_text()).
         """
         if os.path.exists(arg):
             return SimpleTextAndIcons.bitmap_img(arg)
@@ -408,7 +425,7 @@ class LedNameBadge:
         pyhidapi.hid_init()
         _have_pyhidapi = True
         print("Pyhidapi detected")
-    except Exception:
+    except:
         try:
             import usb.core
             print("Pyusb detected")
@@ -429,27 +446,47 @@ class LedNameBadge:
 or
   sudo apt-get install python3-usb
 """)
-            else:  # windows?
+            else: # windows?
                 print("""Please with Linux or MacOS or help us implement support for """ + sys.platform)
             sys.exit(1)
 
 
     @staticmethod
-    def _expand_tuple(l):
-        l = l + (l[-1],) * (8 - len(l))  # repeat last element
-        return l
+    def _prepare_iterable(iterable, min_, max_):
+        try:
+            iterable = [min(max(x, min_), max_) for x in iterable]
+            iterable = tuple(iterable) + (iterable[-1],) * (8 - len(iterable))  # repeat last element
+            return iterable
+        except:
+            raise TypeError("Please give a list or tuple with at least one number: " + str(iterable))
 
 
     @staticmethod
     def header(lengths, speeds, modes, blinks, ants, brightness=100, date=datetime.now()):
-        """ lengths[0] is the number of chars of the first text
-
-          Speeds come in as 1..8, but are needed 0..7 here.
+        """Create a protocol header
+            * length, speeds, modes, blinks, ants are iterables with at least one element
+            * lengths[0] is the number of chars/byte-columns of the first text/bitmap, lengths[1] of the second,
+              and so on...
+            * len(length) should match the designated bitmap data
+            * speeds come in as 1..8, but will be decremented to 0..7, here.
+            * modes: 0..8
+            * blinks and ants: 0..1 or even False..True,
+            * brightness, if given, is any number, but it'll be limited to 25, 50, 75, 100 (percent), here
+            * date, if given, is a datetime object. It will be written in the header, but is not to be seen on the
+              devices screen.
         """
-        ants = LedNameBadge._expand_tuple(ants)
-        blinks = LedNameBadge._expand_tuple(blinks)
-        speeds = LedNameBadge._expand_tuple(speeds)
-        modes = LedNameBadge._expand_tuple(modes)
+        try:
+            lengths_sum = sum(lengths)
+        except:
+            raise TypeError("Please give a list or tuple with at least one number: " + str(lengths))
+        if lengths_sum > (8192 - len(LedNameBadge._protocol_header_template)) / 11 + 1:
+            raise ValueError("The given lengths seem to be far too high: " + str(lengths))
+
+
+        ants = LedNameBadge._prepare_iterable(ants, 0, 1)
+        blinks = LedNameBadge._prepare_iterable(blinks, 0, 1)
+        speeds = LedNameBadge._prepare_iterable(speeds, 1, 8)
+        modes = LedNameBadge._prepare_iterable(modes, 0, 8)
 
         speeds = [x - 1 for x in speeds]
 
@@ -461,6 +498,7 @@ or
             h[5] = 0x20
         elif brightness <= 75:
             h[5] = 0x10
+        # else default 100% == 0x00
 
         for i in range(8):
             h[6] += blinks[i] << i
@@ -473,18 +511,31 @@ or
             h[17 + (2 * i) - 1] = lengths[i] // 256
             h[17 + (2 * i)] = lengths[i] % 256
 
-        h[38 + 0] = date.year % 100
-        h[38 + 1] = date.month
-        h[38 + 2] = date.day
-        h[38 + 3] = date.hour
-        h[38 + 4] = date.minute
-        h[38 + 5] = date.second
+        try:
+            h[38 + 0] = date.year % 100
+            h[38 + 1] = date.month
+            h[38 + 2] = date.day
+            h[38 + 3] = date.hour
+            h[38 + 4] = date.minute
+            h[38 + 5] = date.second
+        except:
+            raise TypeError("Please give a datetime object: " + str(date))
 
         return h
 
 
     @staticmethod
     def write(buf):
+        """Write the given buffer to the device.
+            It has to begin with a protocol header as provided by header() and followed by the bitmap data.
+            In short: the bitmap data is organized in bytes with 8 horizontal pixels per byte and 11 resp. 12
+            bytes per (8 pixels wide) byte-column. Then just put one byte-column after the other and one bitmap
+            after the other.
+        """
+        need_padding = len(buf) % 64
+        if need_padding:
+            buf.extend((0,) * (64 - need_padding))
+
         if len(buf) > 8192:
             print("Writing more than 8192 bytes damages the display!")
             sys.exit(1)
@@ -522,7 +573,7 @@ or
 
 
 def split_to_ints(list_str):
-    return tuple([int(x) for x in re.split(r'[\s,]+', list_str)])
+    return [int(x) for x in re.split(r'[\s,]+', list_str)]
 
 def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -540,7 +591,7 @@ def main():
     parser.add_argument('-p', '--preload', metavar='FILE', action='append',
                         help=argparse.SUPPRESS)  # "Load bitmap images. Use ^A, ^B, ^C, ... in text messages to make them visible. Deprecated, embed within ':' instead")
     parser.add_argument('-l', '--list-names', action='version', help="list named icons to be embedded in messages and exit",
-                        version=':' + ':  :'.join(SimpleTextAndIcons.get_named_bitmaps_keys()) + ':  ::  or e.g. :path/to/some_icon.png:')
+                        version=':' + ':  :'.join(SimpleTextAndIcons._get_named_bitmaps_keys()) + ':  ::  or e.g. :path/to/some_icon.png:')
     parser.add_argument('message', metavar='MESSAGE', nargs='+',
                         help="Up to 8 message texts with embedded builtin icons or loaded images within colons(:) -- See -l for a list of builtins")
     parser.add_argument('--mode-help', action='version', help=argparse.SUPPRESS, version="""
@@ -590,7 +641,7 @@ def main():
     else:
         print("Type: 11x44")
 
-    lengths = tuple([b[1] for b in msg_bitmaps])
+    lengths = [b[1] for b in msg_bitmaps]
     speeds = split_to_ints(args.speed)
     modes = split_to_ints(args.mode)
     blinks = split_to_ints(args.blink)
@@ -602,10 +653,6 @@ def main():
 
     for msg_bitmap in msg_bitmaps:
         buf.extend(msg_bitmap[0])
-
-    need_padding = len(buf) % 64
-    if need_padding:
-        buf.extend((0,) * (64 - need_padding))
 
     LedNameBadge.write(buf)
 

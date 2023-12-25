@@ -459,6 +459,7 @@ parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpForm
                                  epilog='Example combining image and text:\n sudo %s "I:HEART2:you"' % sys.argv[0])
 parser.add_argument('-t', '--type', default='11x44',
                     help="Type of display: supported values are 12x48 or (default) 11x44. Rename the program to led-badge-12x48, to switch the default.")
+parser.add_argument('-H', '--hid', default='0', help="Set to 1 to ensure connect via HID API, program will then not fallback to usb.core library")
 parser.add_argument('-s', '--speed', default='4', help="Scroll speed (Range 1..8). Up to 8 comma-separated values")
 parser.add_argument('-B', '--brightness', default='100',
                     help="Brightness for the display in percent: 25, 50, 75, or 100")
@@ -498,6 +499,8 @@ if have_pyhidapi:
     devinfo = pyhidapi.hid_enumerate(0x0416, 0x5020)
     # dev = pyhidapi.hid_open(0x0416, 0x5020)
 else:
+    if args.hid != "0":
+      sys.exit("HID API access is needed but not initialized. Fix your setup")
     dev = usb.core.find(idVendor=0x0416, idProduct=0x5020)
 
 if have_pyhidapi:
@@ -563,7 +566,12 @@ if len(buf) > 8192:
     sys.exit(1)
 
 if have_pyhidapi:
-    pyhidapi.hid_write(dev, buf)
+    for i in range(int(len(buf)/64)):
+      # sendbuf must contain "report ID" as first byte. "0" does the job here.
+      sendbuf=array('B',[0])
+      # Then, put the 64 payload bytes into the buffer
+      sendbuf.extend(buf[i*64:i*64+64])
+      pyhidapi.hid_write(dev,sendbuf)
 else:
     for i in range(int(len(buf) / 64)):
         time.sleep(0.1)

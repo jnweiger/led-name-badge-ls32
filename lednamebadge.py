@@ -240,7 +240,7 @@ class SimpleTextAndIcons:
     char_offsets = {}
     for i in range(len(charmap)):
         char_offsets[charmap[i]] = 11 * i
-        # print(i, charmap[i], char_offset[charmap[i]])
+        # print(i, charmap[i], char_offsets[charmap[i]])
 
     bitmap_named = {
         'ball': (array('B', (
@@ -447,7 +447,7 @@ or
   sudo apt-get install python3-usb
 """)
             else: # windows?
-                print("""Please with Linux or MacOS or help us implement support for """ + sys.platform)
+                print("""Please try with Linux or MacOS or help us implement support for """ + sys.platform)
             sys.exit(1)
 
 
@@ -551,9 +551,16 @@ or
                 print("No led tag with vendorID 0x0416 and productID 0x5020 found.")
                 print("Connect the led tag and run this tool as root.")
                 sys.exit(1)
-            LedNameBadge.pyhidapi.hid_write(dev, buf)
+            for i in range(int(len(buf)/64)):
+                # sendbuf must contain "report ID" as first byte. "0" does the job here.
+                sendbuf=array('B',[0])
+                # Then, put the 64 payload bytes into the buffer
+                sendbuf.extend(buf[i*64:i*64+64])
+                LedNameBadge.pyhidapi.hid_write(dev, sendbuf)
             LedNameBadge.pyhidapi.hid_close(dev)
         else:
+            if args.hid != "0":
+                sys.exit("HID API access is needed but not initialized. Fix your setup")
             dev = LedNameBadge.usb.core.find(idVendor=0x0416, idProduct=0x5020)
             if dev is None:
                 print("No led tag with vendorID 0x0416 and productID 0x5020 found.")
@@ -581,6 +588,7 @@ def main():
                                      epilog='Example combining image and text:\n sudo %s "I:HEART2:you"' % sys.argv[0])
     parser.add_argument('-t', '--type', default='11x44',
                         help="Type of display: supported values are 12x48 or (default) 11x44. Rename the program to led-badge-12x48, to switch the default.")
+    parser.add_argument('-H', '--hid', default='0', help="Set to 1 to ensure connect via HID API, program will then not fallback to usb.core library")
     parser.add_argument('-s', '--speed', default='4', help="Scroll speed (Range 1..8). Up to 8 comma-separated values")
     parser.add_argument('-B', '--brightness', default='100',
                         help="Brightness for the display in percent: 25, 50, 75, or 100")

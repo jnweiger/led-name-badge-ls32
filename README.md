@@ -1,5 +1,5 @@
 # Led-Badge-44x11
-Upload tool for an led name tag with USB-HID interface
+Upload tool for a LED name tag with USB-HID interface
 
 ![LED Mini Board](photos/blueBadge.jpg)
 
@@ -25,7 +25,7 @@ In both configurations, the badge identifies itself on the USB as
 ## Warning
 
 There are many different versions of LED Badges on the market.
-This one uses an USB-HID interface, while others use USB-Serial (see references below).
+This one uses a USB-HID interface, while others use USB-Serial (see references below).
 
 ## Command Line Installation and Usage
 
@@ -173,9 +173,116 @@ Example combining image and text:
  sudo ./led-badge-11x44.py "I:HEART2:you"
 </pre>
 
+There are some options defining the default type:
+- use lednamebadge.py directly: default type is 11x44
+- rename lednamebadge.py to something with '12' and use that: default type is 12x48
+- use led-badge-11x44.py: default type is 11x44
+- use led-badge-12x48.py: default type is 12x48
+For all these options you can override the default type with -t
 
 ### Animations
 See the gfx/starfield folder for examples. An animation of N frames is provided as an image N*48 pixels wide, for both 48 and 44 pixel wide devices.
+
+## Usage as module
+
+### Writing to the device
+You can use lednamebadge.py as a module in your own content creation code for writing your generated scenes to the device.
+
+- create the header
+- append your own content
+- write to device
+
+The method `header()` takes a number of parameters:
+
+- up to 8 lengths as a tuple of numbers
+  - each length is the number of byte-columns for the corresponding bitmap data, that is the number of bytes of the
+    corresponding bitmap data divided by 11 (for the 11x44 devices) respective 12 (for the 12x48-devices), where one
+    byte is 8 pixels wide.
+- arguments comparable to the command line arguments: up to 8 speeds, modes, blink-flags, ants-flags each as tuple of 
+  numbers, and an (optional) brightness as number.
+- Optionally, you can give a timestamp as datetime. It is written to the device as part of the header, but not visible
+  at the devices display.
+
+Your own content has to be a byte array with the bitmap data for all scenes. Of course, it has to fit the given lengths.
+
+See the following graphic for better understanding:
+
+![bitmap_data_onebyte.png](photos%2Fbitmap_data_onebyte.png)
+
+![bitmap_data_onescene.png](photos%2Fbitmap_data_onescene.png)
+
+For a 12x48 device there have to be 12 bytes for each byte-column instead of 11, of course.
+
+![bitmap_data_all.png](photos%2Fbitmap_data_all.png)
+
+Example:
+
+Let's say, you have 2 scenes, one is 11x32 pixels, one is 11x60 pixels. So, the first have 4 byte-columns and 44 bytes,
+the second has to be padded with 4 empty bit-columns in the last byte-column to 11x64 pixels and has therefore
+8 byte-columns and 88 bytes.
+
+We like to display both in mode 4, the first one with speed 3 and the second one with speed 2 and the second one shall
+be displayed with ants. And we like to set the initial brightness to 50%.
+
+This would be achieved by these calls:
+
+```python
+from lednamebadge import LedNameBadge
+
+buf = array('B')
+buf.extend(LedNameBadge.header((4, 8), (3, 2), (4,), (0,), (0,1), 50))
+buf.extend(scene_one_bytes)
+buf.extend(scene_two_bytes)
+LedNameBadge.write(buf)
+```
+
+### Using the text generation
+
+You can also use the text/icon/graphic generation of this module to get the corresponding byte buffers.
+
+This is quite simple and just like with the command line usage. There is the additional option to create a bitmap just
+and only from an image file by giving the filename instead of a message.
+
+```python
+from lednamebadge import SimpleTextAndIcons
+
+creator = SimpleTextAndIcons()
+scene_a_bitmap = creator.bitmap("Hello :HEART2: World!")
+scene_b_bitmap = creator.bitmap("As you :gfx/bicycle3.png: like...")
+scene_c_bitmap = creator.bitmap("gfx/starfield/starfield_020.png")
+```
+
+The resulting bitmaps are tuples with the byte array and the length each. These lengths can be used in header() directly
+and the byte arrays can be concatenated to the header. Examle:
+
+```python
+from lednamebadge import * 
+
+creator = SimpleTextAndIcons()
+scene_x_bitmap = creator.bitmap("Hello :HEART2: World!")
+scene_y_bitmap = creator.bitmap("Complete example ahead.")
+your_own_stuff = create_own_bitmap_data()
+
+lengths = (scene_x_bitmap[1], scene_y_bitmap[1], your_own_stuff.len)
+buf = array('B')
+buf.extend(LedNameBadge.header(lengths, (3,), (0,), (0,1,0), (0,0,1), 100))
+buf.extend(scene_x_bitmap[0])
+buf.extend(scene_y_bitmap[0])
+buf.extend(your_own_stuff.bytes)
+LedNameBadge.write(buf)
+```
+
+## Development
+
+### Generating Plantuml graphics
+
+You will need PlantUML and potentially GraphViz dot to generate the diagrams from the *.puml files.
+
+Just run `plantuml "*.puml"` from the `photos` directory to regenerate all diagrams.
+
+### Running the unit tests
+
+Run `python run_tests.py` from the `tests` directory.
 
 ## Related References (for USB-Serial devices)
  * https://github.com/Caerbannog/led-mini-board

@@ -559,8 +559,6 @@ or
                 LedNameBadge.pyhidapi.hid_write(dev, sendbuf)
             LedNameBadge.pyhidapi.hid_close(dev)
         else:
-            if args.hid != "0":
-                sys.exit("HID API access is needed but not initialized. Fix your setup")
             dev = LedNameBadge.usb.core.find(idVendor=0x0416, idProduct=0x5020)
             if dev is None:
                 print("No led tag with vendorID 0x0416 and productID 0x5020 found.")
@@ -661,6 +659,10 @@ def main():
 
     for msg_bitmap in msg_bitmaps:
         buf.extend(msg_bitmap[0])
+
+    if not LedNameBadge._have_pyhidapi:
+        if args.hid != "0":
+            sys.exit("HID API access is needed but not initialized. Fix your setup")
 
     LedNameBadge.write(buf)
 

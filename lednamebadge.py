@@ -533,6 +533,7 @@ or
             bytes per (8 pixels wide) byte-column. Then just put one byte-column after the other and one bitmap
             after the other.
         """
+        import usb.util
         need_padding = len(buf) % 64
         if need_padding:
             buf.extend((0,) * (64 - need_padding))
@@ -552,6 +553,7 @@ or
                 print("No led tag with vendorID 0x0416 and productID 0x5020 found.")
                 print("Connect the led tag and run this tool as root.")
                 sys.exit(1)
+            dev.reset()
             for i in range(int(len(buf)/64)):
                 # sendbuf must contain "report ID" as first byte. "0" does the job here.
                 sendbuf=array('B',[0])
@@ -572,10 +574,23 @@ or
             except:
                 pass
             dev.set_configuration()
-            print("using [%s %s] bus=%d dev=%d" % (dev.manufacturer, dev.product, dev.bus, dev.address))
+            iface = dev.get_active_configuration().interfaces()[0]
+            IN = usb.util.ENDPOINT_IN
+            OUT = usb.util.ENDPOINT_OUT
+            out_iface = [
+                e for e in iface.endpoints()
+                if usb.util.endpoint_direction(e.bEndpointAddress) == OUT]
+            in_iface = [
+                e for e in iface.endpoints()
+                if usb.util.endpoint_direction(e.bEndpointAddress) == IN]
+            out_iface_addr = out_iface[0].bEndpointAddress
+            in_iface_addr = in_iface[0].bEndpointAddress
+
+            print("using [%s %s] bus=%d dev=%d" % (
+                dev.manufacturer, dev.product, dev.bus, dev.address))
             for i in range(int(len(buf) / 64)):
-                time.sleep(0.1)
-                dev.write(1, buf[i * 64:i * 64 + 64])
+                dev.write(out_iface_addr, buf[i * 64:i * 64 + 64])
+                dev.read(in_iface_addr, 64)
 
 
 def split_to_ints(list_str):

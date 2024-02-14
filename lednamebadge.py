@@ -573,17 +573,10 @@ or
                 pass
             dev.set_configuration()
             print("using [%s %s] bus=%d dev=%d" % (dev.manufacturer, dev.product, dev.bus, dev.address))
-            endpoint = 1
-            i = 0
-            while i < int(len(buf) / 64):
+            for i in range(int(len(buf) / 64)):
                 time.sleep(0.1)
-                try:
-                    dev.write(endpoint, buf[i * 64:i * 64 + 64])
-                    i += 1
-                except ValueError:
-                    if endpoint == 1:
-                        endpoint = 2
-                        i = 0
+                dev.write(1, buf[i * 64:i * 64 + 64])
+
 
 def split_to_ints(list_str):
     return [int(x) for x in re.split(r'[\s,]+', list_str)]

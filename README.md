@@ -68,8 +68,9 @@ To reuse the venv again at a later point:
 
 ### Manual link the HID API lib for some Linuxes
 
-For some distributions there is a discrepancy between the where pyhidapi searches for the lib and where the package
-hidapi places it. A simple solution is to link the libraray to the needed place, e.g.
+For some distributions there is a discrepancy in where pyhidapi searches for the
+lib and where the package hidapi places it. A simple solution is to link the
+library to the needed place, e.g.
 
     ln -s /usr/lib/libhidapi-hidraw.so.0 /usr/local/lib/
 
@@ -80,63 +81,83 @@ hidapi places it. A simple solution is to link the libraray to the needed place,
     pip install pillow
     ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" < /dev/null 2> /dev/null
     brew install hidapi
-  or
-    Try with `pip3 install pyhidapi`
 
-### Required dependencies on Windows 10
+or Try with
 
-    Download win/inf-wizard.exe to your desktop. Right click 'Run as Administrator'
-       -> Click 0x0416 0x5020 LS32 Custm HID
-       -> Next -> Next -> Documents LS32_Sustm_HID.inf -> Save (we don't need that file)
-       -> Install Now... -> Driver Install Complete -> OK
+    pip3 install pyhidapi
 
-    Download python from python.org
-      [x] install Launcher for all Users
-      [x] Add Python 3.7 to PATH
-       -> Click the 'Install Now ...' text message.
+### Required dependencies on Windows 7/10
 
-    Run cmd.exe as Administrator, enter:
-      pip install pyusb
-      pip install pillow
+For Windows, we need to set up the libusb API for the LED badge device.
+The way described here, uses [libusb-win32](https://github.com/mcuee/libusb-win32/wiki)
+in a quite low level way and in a quite old version:
 
-### Required dependencies on Windows 7
+- Please use version 1.2.6.0 of 'usblib-win32`. It's still available on the
+  [old project repo on SourceForge](https://sourceforge.net/projects/libusb-win32/files/libusb-win32-releases/1.2.6.0/)
+- Then
+	- Extract `bin/inf-wizard.exe` from the downloaded zip file. Right click and `Run as Administrator`
+	- `Next` -> Select `0x0416 0x5020 LS32 Custm HID` (or similar with the same IDs)
+	- `Next` -> `Next` -> Save as dialog `LS32_Sustm_HID.inf` -> `Save` (just to proceed, we don't need that file)
+	- `Install Now...` -> Driver Install Complete -> `OK`
 
-    Download win/win32-bin-1.2.6.0.zip to your desktop. Extract.
-    Find the inf-wizard.exe in the bin folder. Right click 'Run as Administrator'
-    Then continue as with windows 10 above.
+There are other - meanwhile recommended, but untested here - ways to install and setup
+newer versions of `libus-win32`: use
+[Zadig](https://zadig.akeo.ie/) (it is also available from the old libusb-win32 repo on
+[GitHub repo](https://github.com/mcuee/libusb-win32/releases) of newer releases)
+or [libusbK](https://libusbk.sourceforge.net/UsbK3/index.html)
 
+Of course, Python is needed:
+
+- Download latest python from [python.org](https://www.python.org/downloads/),
+or specific versions from [here](https://www.python.org/downloads/windows/)
+	- Checkmark the following options
+		- `[x]` install Launcher for all Users
+		- `[x]` Add Python X.Y to PATH
+	- Click the `Install Now ...` text message.
+
+Install needed the Python packages.
+
+- Run cmd.exe as Administrator, enter:
+
+		pip install pyusb
+        pip install pillow
 
 #### Examples:
 
-Sudo may or may not be needed for accessing the USB device, depending on your system.
+To run these examples on linux, you might have to prepend `sudo` for accessing
+the USB device. On Windows, maybe you have to run the `cmd`, where you enter the
+commands, with `Run as administrator`, which is similar to the `sudo`on linux.
 
-    sudo python3 ./led-badge-11x44.py "Hello World!"
+On systems with Python 2 *and* 3 installed, you might want to use Python 3
+explicitely by using `python3` instead of `python`.
+
+    python ./led-badge-11x44.py "Hello World!"
 
 loads the text 'Hello World!' as the first message, and scrolls it from right to left (default scroll mode=0) and speed 4 (default). After an upload the device shows the first message once and returns to the charging screen if still connected to USB. Either pull the plug or press the small button next to the USB connector.
 
-    sudo python3 ./led-badge-11x44.py -m 6 -s 8 "Hello" "World!"
+    python ./led-badge-11x44.py -m 6 -s 8 "Hello" "World!"
 
 loads the text 'Hello' as message one and 'World!' as message two. Compare the difference in quoting to the previous example. Up to 8 messages can be uploaded. This example uses mode 6, which drops the words with a nice little animation vertically into the display area. Speed is set to maximum here, for smoothness.
 
-Per default you will only see 'Hello'.  To see all messages, press the small button next to the USB connector multiple times, until you briefly see 'M1-8'. Now the display loops through all uploaded messages.
+Per default, you will only see 'Hello'.  To see all messages, press the small button next to the USB connector multiple times, until you briefly see 'M1-8'. Now the display loops through all uploaded messages.
 
-    sudo python3 ./led-badge-11x44.py -m 5 :gfx/fablabnbg_logo_44x11.png:
+    python ./led-badge-11x44.py -m 5 :gfx/fablabnbg_logo_44x11.png:
 
 loads a fullscreen still image. Avoid whitespace between colons and name. If you receive a message `ImportError: cannot import name '_imaging'`, then try to update the corresponding package: `sudo pip install -U Pillow`
 
-    sudo python3 ./led-badge-11x44.py "I:HEART2:my:gfx/fablab_logo_16x11.png:fablab:1:"
+    python ./led-badge-11x44.py "I:HEART2:my:gfx/fablab_logo_16x11.png:fablab:1:"
 
 uses one builtin and one loaded image. The heart is builtin, and the fablab-logo is loaded from file. The fablab logo is used twice, once before the word 'fablab' and again behind through the reference ':1:' (which references the first loaded image).
 
 ![LED Mini Board](photos/love_my_fablab.jpg)
 
-    sudo python3 ./led-badge-11x44.py -s7 -m0,1 :bicycle: :bicycle_r:
+    python ./led-badge-11x44.py -s7 -m0,1 :bicycle: :bicycle_r:
 
 shows a bicycle crossing the display in left-to-right and right-to-left (as a second message). If you select the 'M1-8' mode, the bike permanently runs back and forth the display. You may add a short message to one or both, to make it appear the bike is pulling the text around.
 
 ![LED Mini Board](photos/bicycle.gif)
 
-    sudo python3 ./led-badge-11-x44.py -b0,1 -s1 -m5 "  :heart2:    :HEART2:" "  :HEART2:"
+    python ./led-badge-11-x44.py -b0,1 -s1 -m5 "  :heart2:    :HEART2:" "  :HEART2:"
 
 shows a simple animation of a slowly beating heart on the first message, and a blinking heart on the second message.
 
@@ -144,11 +165,11 @@ shows a simple animation of a slowly beating heart on the first message, and a b
 
 ![M2 ishm](photos/m2ishm.gif)
 
-    python3 ./led-badge-11x44.py --list-names
+    python ./led-badge-11x44.py --list-names
 
 prints the list of builtin icon names, including :happy: :happy2: :heart: :HEART: :heart2: :HEART2: :fablab: :bicycle: :bicycle_r: :owncloud: ::
 
-    python3 ./led-badge-11x44.py --help
+    python ./led-badge-11x44.py --help
 
 prints some condensed help:
 
@@ -216,13 +237,13 @@ Your own content has to be a byte array with the bitmap data for all scenes. Of 
 
 See the following graphic for better understanding:
 
-![bitmap_data_onebyte.png](photos%2Fbitmap_data_onebyte.png)
+![bitmap_data_onebyte.png](photos/bitmap_data_onebyte.png)
 
-![bitmap_data_onescene.png](photos%2Fbitmap_data_onescene.png)
+![bitmap_data_onescene.png](photos/bitmap_data_onescene.png)
 
 For a 12x48 device there have to be 12 bytes for each byte-column instead of 11, of course.
 
-![bitmap_data_all.png](photos%2Fbitmap_data_all.png)
+![bitmap_data_all.png](photos/bitmap_data_all.png)
 
 Example:
 
@@ -262,7 +283,7 @@ scene_c_bitmap = creator.bitmap("gfx/starfield/starfield_020.png")
 ```
 
 The resulting bitmaps are tuples with the byte array and the length each. These lengths can be used in header() directly
-and the byte arrays can be concatenated to the header. Examle:
+and the byte arrays can be concatenated to the header. Example:
 
 ```python
 from lednamebadge import * 

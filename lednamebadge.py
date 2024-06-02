@@ -60,6 +60,7 @@
 #     * There is some initialization code executed in the classes not needed, if not imported. This is nagging me
 #       somehow, but it is acceptable, as we do not need to save every processor cycle, here :)
 #     * Have fun!
+# v0.14, 2024-06-02, bs preparation for automatic or manual endpoint and bluetooth.
 
 
 import argparse
@@ -71,7 +72,7 @@ from array import array
 from datetime import datetime
 
 
-__version = "0.13"
+__version = "0.14"
 
 
 class SimpleTextAndIcons:
@@ -294,7 +295,6 @@ class SimpleTextAndIcons:
     for i in bitmap_named:
         bitmap_builtin[bitmap_named[i][2]] = bitmap_named[i]
 
-
     def __init__(self):
         self.bitmap_preloaded = [([], 0)]
         self.bitmaps_preloaded_unused = False
@@ -304,16 +304,13 @@ class SimpleTextAndIcons:
         self.bitmap_preloaded.append(SimpleTextAndIcons.bitmap_img(filename))
         self.bitmaps_preloaded_unused = True
 
-
     def are_preloaded_unused(self):
         """Still used by main, but deprecated. PLease use ":"-notation for bitmap() / bitmap_text()"""
-        return self.bitmaps_preloaded_unused == True
-
+        return self.bitmaps_preloaded_unused is True
 
     @staticmethod
     def _get_named_bitmaps_keys():
         return SimpleTextAndIcons.bitmap_named.keys()
-
 
     def bitmap_char(self, ch):
         """Returns a tuple of 11 bytes, it is the bitmap data of given character.
@@ -329,7 +326,6 @@ class SimpleTextAndIcons:
 
         o = SimpleTextAndIcons.char_offsets[ch]
         return (SimpleTextAndIcons.font_11x44[o:o + 11], 1)
-
 
     def bitmap_text(self, text):
         """Returns a tuple of (buffer, length_in_byte_columns_aka_chars)
@@ -361,7 +357,6 @@ class SimpleTextAndIcons:
             cols += n
         return (buf, cols)
 
-
     @staticmethod
     def bitmap_img(file):
         """Returns a tuple of (buffer, length_in_byte_columns) representing the given image file.
@@ -369,7 +364,12 @@ class SimpleTextAndIcons:
             grayscale by arithmetic mean. Threshold for an active led is then > 127.
             If the width is not a multiple on 8 it will be padded with empty pixel-columns.
         """
-        from PIL import Image
+        try:
+            from PIL import Image
+        except:
+            print("If you like to use images, the module pillow is needed. Try:")
+            print("$ pip install pillow")
+            sys.exit(1)
 
         im = Image.open(file)
         print("fetching bitmap from file %s -> (%d x %d)" % (file, im.width, im.height))
@@ -398,7 +398,6 @@ class SimpleTextAndIcons:
         im.close()
         return (buf, cols)
 
-
     def bitmap(self, arg):
         """If arg is a valid and existing path name, we load it as an image.
             Otherwise, we take it as a string (with ":"-notation, see bitmap_text()).
@@ -408,6 +407,117 @@ class SimpleTextAndIcons:
         return self.bitmap_text(arg)
 
 
+class WriteMethod:
+    @staticmethod
+    def add_padding(buf, blocksize):
+        need_padding = len(buf) % blocksize
+        if need_padding:
+            buf.extend((0,) * (blocksize - need_padding))
+
+    @staticmethod
+    def check_length(buf, maxsize):
+        if len(buf) > maxsize:
+            print("Writing more than %d bytes damages the display!" % (maxsize,))
+            sys.exit(1)
+
+    def has_device(self):
+        raise NotImplementedError()
+
+    def write(self, buf):
+        self.add_padding(buf, 64)
+        self.check_length(buf, 8192)
+        self._write(buf)
+
+    def _write(self, buf):
+        raise NotImplementedError()
+
+
+class WriteLibUsb(WriteMethod):
+    _module_loaded = False
+    try:
+        import usb.core
+        _module_loaded = True
+        print("Module pyusb detected")
+    except:
+        pass
+
+    def __init__(self, endpoint):
+        self.dev = None
+        if WriteLibUsb._module_loaded:
+            self.dev = WriteLibUsb.usb.core.find(idVendor=0x0416, idProduct=0x5020)
+            if self.dev:
+                print("Libusb device initialized")
+
+    @staticmethod
+    def is_ready():
+        return WriteLibUsb._module_loaded
+
+    def has_device(self):
+        return self.dev is not None
+
+    def _write(self, buf):
+        if not self.dev:
+            return
+
+        try:
+            # win32: NotImplementedError: is_kernel_driver_active
+            if self.dev.is_kernel_driver_active(0):
+                self.dev.detach_kernel_driver(0)
+        except:
+            pass
+        self.dev.set_configuration()
+        print("Write using [%s %s] bus=%d dev=%d via libusb" %
+              (self.dev.manufacturer, self.dev.product, self.dev.bus, self.dev.address))
+        for i in range(int(len(buf) / 64)):
+            time.sleep(0.1)
+            self.dev.write(1, buf[i * 64:i * 64 + 64])
+
+
+class WriteUsbHidApi(WriteMethod):
+    _module_loaded = False
+    try:
+        import pyhidapi
+        pyhidapi.hid_init()
+        _module_loaded = True
+        print("Module pyhidapi detected")
+    except:
+        pass
+
+    def __init__(self, endpoint):
+        self.dev = None
+        self.dev_info = None
+        if WriteUsbHidApi._module_loaded:
+            self.dev_info = WriteUsbHidApi.pyhidapi.hid_enumerate(0x0416, 0x5020)
+            if self.dev_info:
+                self.dev = WriteUsbHidApi.pyhidapi.hid_open_path(self.dev_info[0].path)
+                if self.dev:
+                    print("Hidapi device initialized")
+
+            # alternative: self.dev = WriteUsbHidApi.pyhidapi.hid_open(0x0416, 0x5020)
+
+    @staticmethod
+    def is_ready():
+        return WriteUsbHidApi._module_loaded
+
+    def has_device(self):
+        return self.dev is not None
+
+    def _write(self, buf):
+        if not self.dev or not self.dev_info:
+            return
+
+        print("Write using [%s %s] int=%d page=%s via hidapi" % (
+            self.dev_info[0].manufacturer_string, self.dev_info[0].product_string,
+            self.dev_info[0].interface_number, self.dev_info[0].usage_page))
+        for i in range(int(len(buf)/64)):
+            # sendbuf must contain "report ID" as first byte. "0" does the job here.
+            sendbuf = array('B', [0])
+            # Then, put the 64 payload bytes into the buffer
+            sendbuf.extend(buf[i*64:i*64+64])
+            WriteUsbHidApi.pyhidapi.hid_write(self.dev, sendbuf)
+        WriteUsbHidApi.pyhidapi.hid_close(self.dev)
+
+
 class LedNameBadge:
     _protocol_header_template = (
         0x77, 0x61, 0x6e, 0x67, 0x00, 0x00, 0x00, 0x00, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40,
@@ -415,51 +525,6 @@ class LedNameBadge:
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
     )
-    _have_pyhidapi = False
-
-    try:
-        if sys.version_info[0] < 3:
-            print("Preferring Pyusb over Pyhidapi with Python 2.x")
-            raise Exception("Prefer usb.core with python-2.x because of https://github.com/jnweiger/led-badge-ls32/issues/9")
-        import pyhidapi
-        pyhidapi.hid_init()
-        _have_pyhidapi = True
-        print("Pyhidapi detected")
-    except:
-        try:
-            import usb.core
-            print("Pyusb detected")
-        except:
-            print("ERROR: Need the pyhidapi or usb.core module.")
-            if sys.platform == "darwin":
-                print("""Please try
-  pip3 install pyhidapi
-  pip install pyhidapi
-  brew install hidapi
-""")
-            elif sys.platform == "linux":
-                print("""Please try
-  sudo pip3 install pyhidapi
-  sudo pip install pyhidapi
-  sudo apt-get install libhidapi-hidraw0
-  sudo ln -s /usr/lib/x86_64-linux-gnu/libhidapi-hidraw.so.0  /usr/local/lib/
-or
-  sudo apt-get install python3-usb
-""")
-            else: # windows?
-                print("""Please try with Linux or MacOS or help us implement support for """ + sys.platform)
-            sys.exit(1)
-
-
-    @staticmethod
-    def _prepare_iterable(iterable, min_, max_):
-        try:
-            iterable = [min(max(x, min_), max_) for x in iterable]
-            iterable = tuple(iterable) + (iterable[-1],) * (8 - len(iterable))  # repeat last element
-            return iterable
-        except:
-            raise TypeError("Please give a list or tuple with at least one number: " + str(iterable))
-
 
     @staticmethod
     def header(lengths, speeds, modes, blinks, ants, brightness=100, date=datetime.now()):
@@ -523,62 +588,106 @@ or
 
         return h
 
+    @staticmethod
+    def _prepare_iterable(iterable, min_, max_):
+        try:
+            iterable = [min(max(x, min_), max_) for x in iterable]
+            iterable = tuple(iterable) + (iterable[-1],) * (8 - len(iterable))  # repeat last element
+            return iterable
+        except:
+            raise TypeError("Please give a list or tuple with at least one number: " + str(iterable))
 
     @staticmethod
-    def write(buf):
+    def write(buf, method = 'auto', endpoint = 'auto'):
         """Write the given buffer to the device.
             It has to begin with a protocol header as provided by header() and followed by the bitmap data.
             In short: the bitmap data is organized in bytes with 8 horizontal pixels per byte and 11 resp. 12
             bytes per (8 pixels wide) byte-column. Then just put one byte-column after the other and one bitmap
             after the other.
         """
-        need_padding = len(buf) % 64
-        if need_padding:
-            buf.extend((0,) * (64 - need_padding))
+        write_method = LedNameBadge._find_write_method(method, endpoint)
+        if write_method:
+            write_method.write(buf)
 
-        if len(buf) > 8192:
-            print("Writing more than 8192 bytes damages the display!")
+    @staticmethod
+    def _find_write_method(method, endpoint):
+        if method is None:
+            method = 'auto'
+
+        if endpoint is None:
+            endpoint = 'auto'
+
+        if method not in ('libusb', 'hidapi', 'auto'):
+            print("Unknown write method '%s'." % (method,))
             sys.exit(1)
 
-        if LedNameBadge._have_pyhidapi:
-            dev_info = LedNameBadge.pyhidapi.hid_enumerate(0x0416, 0x5020)
-            # dev = pyhidapi.hid_open(0x0416, 0x5020)
-            if dev_info:
-                dev = LedNameBadge.pyhidapi.hid_open_path(dev_info[0].path)
-                print("using [%s %s] int=%d page=%s via pyHIDAPI" % (
-                    dev_info[0].manufacturer_string, dev_info[0].product_string, dev_info[0].interface_number, dev_info[0].usage_page))
-            else:
-                print("No led tag with vendorID 0x0416 and productID 0x5020 found.")
-                print("Connect the led tag and run this tool as root.")
+        if method == 'libusb':
+            if sys.platform == "darwin":
+                print("For MacOs, please use method 'hidapi' or 'auto'.")
+                print("Or help us implementing support for MacOs.")
                 sys.exit(1)
-            for i in range(int(len(buf)/64)):
-                # sendbuf must contain "report ID" as first byte. "0" does the job here.
-                sendbuf=array('B',[0])
-                # Then, put the 64 payload bytes into the buffer
-                sendbuf.extend(buf[i*64:i*64+64])
-                LedNameBadge.pyhidapi.hid_write(dev, sendbuf)
-            LedNameBadge.pyhidapi.hid_close(dev)
-        else:
-            dev = LedNameBadge.usb.core.find(idVendor=0x0416, idProduct=0x5020)
-            if dev is None:
-                print("No led tag with vendorID 0x0416 and productID 0x5020 found.")
-                print("Connect the led tag and run this tool as root.")
+            elif not WriteLibUsb.is_ready():
+                print("The method 'libusb' is not possible to be used: The module could not be loaded.")
+                print("* Have you installed the Module? Try:")
+                print("  $ pip install pyusb")
+                if sys.platform == 'windows':
+                    print("""* Have you installed the libusb driver or libusb-filter for the device?""")
                 sys.exit(1)
-            try:
-                # win32: NotImplementedError: is_kernel_driver_active
-                if dev.is_kernel_driver_active(0):
-                    dev.detach_kernel_driver(0)
-            except:
-                pass
-            dev.set_configuration()
-            print("using [%s %s] bus=%d dev=%d" % (dev.manufacturer, dev.product, dev.bus, dev.address))
-            for i in range(int(len(buf) / 64)):
-                time.sleep(0.1)
-                dev.write(1, buf[i * 64:i * 64 + 64])
 
+        if method == 'hidapi':
+            if sys.platform == "windows":
+                print("For Windows, please use method 'libusb' or 'auto'.")
+                print("Or help us implementing support for Windows.")
+                sys.exit(1)
+            elif sys.version_info[0] < 3:
+                print("Please use method 'libusb' or 'auto' with python-2.x because of https://github.com/jnweiger/led-badge-ls32/issues/9")
+                sys.exit(1)
+            elif not WriteUsbHidApi.is_ready():
+                print("The method 'hidapi' is not possible to be used: The module could not be loaded.")
+                print("* Have you installed the Module? Try:")
+                print("  $ pip install pyhidapi")
+                if sys.platform == 'darwin':
+                    print("* Have you installed the library itself? Try:")
+                    print("  $ brew install hidapi")
+                elif sys.platform == 'linux':
+                    print("  or")
+                    print("  $ sudo apt-get install python3-usb")
+                    print("* Is the library itself installed? Try (or similar, suitable for your distro):")
+                    print("  $ sudo apt-get install libhidapi-hidraw0")
+                    print("* If the library is still not found by the module, try (or similar, suitable for you distro):")
+                    print("  $ sudo ln -s /usr/lib/x86_64-linux-gnu/libhidapi-hidraw.so.0  /usr/local/lib/")
+                sys.exit(1)
 
-def split_to_ints(list_str):
-    return [int(x) for x in re.split(r'[\s,]+', list_str)]
+        # Python2 only with libusb
+        if method == 'auto' and sys.version_info[0] < 3:
+            method = 'libusb'
+            print("Preferring method 'libusb' over 'hidapi' with Python 2.x because of https://github.com/jnweiger/led-badge-ls32/issues/9")
+
+        if (method == 'auto' or method == 'hidapi') and WriteUsbHidApi.is_ready():
+            method_obj = WriteUsbHidApi(endpoint)
+            if method_obj.has_device():
+                return method_obj
+
+        if (method == 'auto' or method == 'libusb') and WriteLibUsb.is_ready():
+            method_obj = WriteLibUsb(endpoint)
+            if method_obj.has_device():
+                return method_obj
+
+        endpoint_str = ''
+        if endpoint != 'auto':
+            endpoint = int(endpoint)
+            endpoint_str = ' on endpoint %d' % (endpoint,)
+
+        print("The device is not available with write method '%s'%s." % (method, endpoint_str))
+        print("* Is a led tag device with vendorID 0x0416 and productID 0x5020 connected?")
+        if endpoint != 'auto':
+            print("* Have you given the right endpoint?")
+            if sys.platform == "linux":
+                print("  Try this to find the available endpoint addresses:")
+                print('  $ lsusb -d 0416:5020 -v | grep -i "endpoint.*out"')
+        print("* If it is connected and still do not work, maybe you have to run this program as root.")
+        sys.exit(1)
+
 
 def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -586,7 +695,9 @@ def main():
                                      epilog='Example combining image and text:\n sudo %s "I:HEART2:you"' % sys.argv[0])
     parser.add_argument('-t', '--type', default='11x44',
                         help="Type of display: supported values are 12x48 or (default) 11x44. Rename the program to led-badge-12x48, to switch the default.")
-    parser.add_argument('-H', '--hid', default='0', help="Set to 1 to ensure connect via HID API, program will then not fallback to usb.core library")
+    parser.add_argument('-H', '--hid', default='0', help="Deprecated, only for backwards compatibility, please use -M! Set to 1 to ensure connect via HID API, program will then not fallback to usb.core library")
+    parser.add_argument('-M', '--method', default='auto', help="Force using the given write method ('hidapi' or 'libusb')")
+    parser.add_argument('-E', '--endpoint', default='auto', help="Force using the given device endpoint")
     parser.add_argument('-s', '--speed', default='4', help="Scroll speed (Range 1..8). Up to 8 comma-separated values")
     parser.add_argument('-B', '--brightness', default='100',
                         help="Brightness for the display in percent: 25, 50, 75, or 100")
@@ -660,11 +771,19 @@ def main():
     for msg_bitmap in msg_bitmaps:
         buf.extend(msg_bitmap[0])
 
-    if not LedNameBadge._have_pyhidapi:
-        if args.hid != "0":
-            sys.exit("HID API access is needed but not initialized. Fix your setup")
+    # Translate -H to -M parameter
+    method = args.method
+    if args.hid == 1:
+        if not method or method == 'auto':
+            method = 'hidapi'
+        else:
+            sys.exit("Parameter values are ambiguous. Please use either -H or -M.")
 
-    LedNameBadge.write(buf)
+    LedNameBadge.write(buf, method, args.endpoint)
+
+
+def split_to_ints(list_str):
+    return [int(x) for x in re.split(r'[\s,]+', list_str)]
 
 
 if __name__ == '__main__':

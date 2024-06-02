@@ -369,6 +369,7 @@ class SimpleTextAndIcons:
         except:
             print("If you like to use images, the module pillow is needed. Try:")
             print("$ pip install pillow")
+            LedNameBadge.print_install_message()
             sys.exit(1)
 
         im = Image.open(file)
@@ -431,7 +432,6 @@ class WriteMethod:
     def _write(self, buf):
         raise NotImplementedError()
 
-
 class WriteLibUsb(WriteMethod):
     _module_loaded = False
     try:
@@ -465,7 +465,16 @@ class WriteLibUsb(WriteMethod):
                 self.dev.detach_kernel_driver(0)
         except:
             pass
-        self.dev.set_configuration()
+
+        try:
+            self.dev.set_configuration()
+        except(WriteLibUsb.usb.core.USBError):
+            print("No write access to device!")
+            print("Maybe, you have to run this program with administrator rights.")
+            if 'linux' in sys.platform:
+                print("* Try with sudo or add a udev rule like described in README.md.")
+            sys.exit(1)
+
         print("Write using [%s %s] bus=%d dev=%d via libusb" %
               (self.dev.manufacturer, self.dev.product, self.dev.bus, self.dev.address))
         for i in range(int(len(buf) / 64)):
@@ -621,8 +630,20 @@ class LedNameBadge:
             print("Unknown write method '%s'." % (method,))
             sys.exit(1)
 
+        # Python2 only with libusb
+        if method == 'auto':
+            if sys.version_info[0] < 3:
+                method = 'libusb'
+                print("Preferring method 'libusb' over 'hidapi' with Python 2.x because of https://github.com/jnweiger/led-badge-ls32/issues/9")
+            elif sys.platform == 'darwin':
+                method = 'hidapi'
+                print("Selected method 'hidapi' with MacOs")
+            elif sys.platform == 'windows':
+                method = 'libusb'
+                print("Selected method 'libusb' with Windows")
+
         if method == 'libusb':
-            if sys.platform == "darwin":
+            if sys.platform == 'darwin':
                 print("For MacOs, please use method 'hidapi' or 'auto'.")
                 print("Or help us implementing support for MacOs.")
                 sys.exit(1)
@@ -630,12 +651,16 @@ class LedNameBadge:
                 print("The method 'libusb' is not possible to be used: The module could not be loaded.")
                 print("* Have you installed the Module? Try:")
                 print("  $ pip install pyusb")
+                LedNameBadge._print_install_hints()
                 if sys.platform == 'windows':
-                    print("""* Have you installed the libusb driver or libusb-filter for the device?""")
+                    print("* Have you installed the libusb driver or libusb-filter for the device?")
+                elif 'linux' in sys.platform:
+                    print("* Is the library itself installed? Try (or similar, suitable for your distro):")
+                    print("  $ sudo apt-get install libusb-1.0-0")
                 sys.exit(1)
 
         if method == 'hidapi':
-            if sys.platform == "windows":
+            if sys.platform == 'windows':
                 print("For Windows, please use method 'libusb' or 'auto'.")
                 print("Or help us implementing support for Windows.")
                 sys.exit(1)
@@ -646,22 +671,16 @@ class LedNameBadge:
                 print("The method 'hidapi' is not possible to be used: The module could not be loaded.")
                 print("* Have you installed the Module? Try:")
                 print("  $ pip install pyhidapi")
+                LedNameBadge._print_install_hints()
                 if sys.platform == 'darwin':
                     print("* Have you installed the library itself? Try:")
                     print("  $ brew install hidapi")
-                elif sys.platform == 'linux':
-                    print("  or")
-                    print("  $ sudo apt-get install python3-usb")
+                elif 'linux' in sys.platform:
                     print("* Is the library itself installed? Try (or similar, suitable for your distro):")
                     print("  $ sudo apt-get install libhidapi-hidraw0")
                     print("* If the library is still not found by the module, try (or similar, suitable for you distro):")
                     print("  $ sudo ln -s /usr/lib/x86_64-linux-gnu/libhidapi-hidraw.so.0  /usr/local/lib/")
                 sys.exit(1)
-
-        # Python2 only with libusb
-        if method == 'auto' and sys.version_info[0] < 3:
-            method = 'libusb'
-            print("Preferring method 'libusb' over 'hidapi' with Python 2.x because of https://github.com/jnweiger/led-badge-ls32/issues/9")
 
         if (method == 'auto' or method == 'hidapi') and WriteUsbHidApi.is_ready():
             method_obj = WriteUsbHidApi(endpoint)
@@ -682,12 +701,21 @@ class LedNameBadge:
         print("* Is a led tag device with vendorID 0x0416 and productID 0x5020 connected?")
         if endpoint != 'auto':
             print("* Have you given the right endpoint?")
-            if sys.platform == "linux":
+            if 'linux' in sys.platform:
                 print("  Try this to find the available endpoint addresses:")
                 print('  $ lsusb -d 0416:5020 -v | grep -i "endpoint.*out"')
-        print("* If it is connected and still do not work, maybe you have to run this program as root.")
+        print("* If it is connected and still do not work, maybe you have to run")
+        print("  this program as root.")
         sys.exit(1)
 
+    @staticmethod
+    def _print_install_hints():
+        print("  (You may need to use pip3 or pip2 instead of pip depending on your python version.)")
+        print("  (You may need prepend 'sudo' for system wide module installation.)")
+        if 'linux' in sys.platform:
+            print("  (You may also use your package manager, but the exact package might be different.")
+            print("   E.g. 'sudo apt install python3-usb' for pyusb)")
+        
 
 def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,

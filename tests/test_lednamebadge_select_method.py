@@ -85,7 +85,7 @@ class Test(TestCase):
     def test_all_out_linux_negative(self):
         method, output = self.call_it(False, False, False, None, None)
         self.assertNotIn('device initialized', output)
-        self.assertIn('device is not available', output)
+        self.assertIn('You need', output)
         self.assertIsNone(method)
 
         method, output = self.call_it(False, False, False, 'libusb', None)
@@ -135,7 +135,7 @@ class Test(TestCase):
                     pass
                 output = stdio_mock.getvalue()
         print(output)
-        self.assertEqual(pyusb_available, 'pyusb detected' in output)
+        self.assertEqual(pyusb_available, 'usb.core detected' in output)
         self.assertEqual(pyhidapi_available, 'pyhidapi detected' in output)
         return method_obj, output
 

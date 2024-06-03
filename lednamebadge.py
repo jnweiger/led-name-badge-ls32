@@ -369,7 +369,7 @@ class SimpleTextAndIcons:
         except:
             print("If you like to use images, the module pillow is needed. Try:")
             print("$ pip install pillow")
-            LedNameBadge.print_install_message()
+            LedNameBadge._print_common_install_hints()
             sys.exit(1)
 
         im = Image.open(file)
@@ -437,7 +437,7 @@ class WriteLibUsb(WriteMethod):
     try:
         import usb.core
         _module_loaded = True
-        print("Module pyusb detected")
+        print("Module usb.core detected")
     except:
         pass
 
@@ -642,6 +642,20 @@ class LedNameBadge:
             elif sys.platform.startswith('win'):
                 method = 'libusb'
                 print("Selected method 'libusb' with Windows")
+            elif not WriteLibUsb.is_ready() and not WriteUsbHidApi.is_ready():
+                if sys.version_info[0] < 3 or sys.platform.startswith('win'):
+                    print("You need the usb.core module.")
+                    LedNameBadge._print_libusb_install_hints()
+                    sys.exit(1)
+                elif sys.platform.startswith('darwin'):
+                    print("You need the pyhidapi module.")
+                    LedNameBadge._print_hidapi_install_hints()
+                    sys.exit(1)
+                else:
+                    print("You need the pyhidapi or usb.core module.")
+                    LedNameBadge._print_libusb_install_hints()
+                    LedNameBadge._print_hidapi_install_hints()
+                    sys.exit(1)
 
         if method == 'libusb':
             if sys.platform.startswith('darwin'):
@@ -649,15 +663,7 @@ class LedNameBadge:
                 print("Or help us implementing support for MacOs.")
                 sys.exit(1)
             elif not WriteLibUsb.is_ready():
-                print("The method 'libusb' is not possible to be used: The module could not be loaded.")
-                print("* Have you installed the Module? Try:")
-                print("  $ pip install pyusb")
-                LedNameBadge._print_install_hints()
-                if sys.platform.startswith('win'):
-                    print("* Have you installed the libusb driver or libusb-filter for the device?")
-                elif sys.platform.startswith('linux'):
-                    print("* Is the library itself installed? Try (or similar, suitable for your distro):")
-                    print("  $ sudo apt-get install libusb-1.0-0")
+                LedNameBadge._print_libusb_install_hints()
                 sys.exit(1)
 
         if method == 'hidapi':
@@ -669,18 +675,7 @@ class LedNameBadge:
                 print("Please use method 'libusb' or 'auto' with python-2.x because of https://github.com/jnweiger/led-badge-ls32/issues/9")
                 sys.exit(1)
             elif not WriteUsbHidApi.is_ready():
-                print("The method 'hidapi' is not possible to be used: The module could not be loaded.")
-                print("* Have you installed the Module? Try:")
-                print("  $ pip install pyhidapi")
-                LedNameBadge._print_install_hints()
-                if sys.platform.startswith('darwin'):
-                    print("* Have you installed the library itself? Try:")
-                    print("  $ brew install hidapi")
-                elif sys.platform.startswith('linux'):
-                    print("* Is the library itself installed? Try (or similar, suitable for your distro):")
-                    print("  $ sudo apt-get install libhidapi-hidraw0")
-                    print("* If the library is still not found by the module, try (or similar, suitable for you distro):")
-                    print("  $ sudo ln -s /usr/lib/x86_64-linux-gnu/libhidapi-hidraw.so.0  /usr/local/lib/")
+                LedNameBadge._print_hidapi_install_hints()
                 sys.exit(1)
 
         if (method == 'auto' or method == 'hidapi') and WriteUsbHidApi.is_ready():
@@ -710,7 +705,34 @@ class LedNameBadge:
         sys.exit(1)
 
     @staticmethod
-    def _print_install_hints():
+    def _print_libusb_install_hints():
+        print("The method 'libusb' is not possible to be used: The module usb.core could not be loaded.")
+        print("* Have you installed the Module? Try:")
+        print("  $ pip install pyusb")
+        LedNameBadge._print_common_install_hints()
+        if sys.platform.startswith('win'):
+            print("* Have you installed the libusb driver or libusb-filter for the device?")
+        elif sys.platform.startswith('linux'):
+            print("* Is the library itself installed? Try (or similar, suitable for your distro):")
+            print("  $ sudo apt-get install libusb-1.0-0")
+
+    @staticmethod
+    def _print_hidapi_install_hints():
+        print("The method 'hidapi' is not possible to be used: The module pyhidapi could not be loaded.")
+        print("* Have you installed the Module? Try:")
+        print("  $ pip install pyhidapi")
+        LedNameBadge._print_common_install_hints()
+        if sys.platform.startswith('darwin'):
+            print("* Have you installed the library itself? Try:")
+            print("  $ brew install hidapi")
+        elif sys.platform.startswith('linux'):
+            print("* Is the library itself installed? Try (or similar, suitable for your distro):")
+            print("  $ sudo apt-get install libhidapi-hidraw0")
+            print("* If the library is still not found by the module, try (or similar, suitable for you distro):")
+            print("  $ sudo ln -s /usr/lib/x86_64-linux-gnu/libhidapi-hidraw.so.0  /usr/local/lib/")
+
+    @staticmethod
+    def _print_common_install_hints():
         print("  (You may need to use pip3 or pip2 instead of pip depending on your python version.)")
         print("  (You may need prepend 'sudo' for system wide module installation.)")
         if sys.platform.startswith('linux'):

@@ -471,7 +471,7 @@ class WriteLibUsb(WriteMethod):
         except(WriteLibUsb.usb.core.USBError):
             print("No write access to device!")
             print("Maybe, you have to run this program with administrator rights.")
-            if 'linux' in sys.platform:
+            if sys.platform.startswith('linux'):
                 print("* Try with sudo or add a udev rule like described in README.md.")
             sys.exit(1)
 
@@ -628,6 +628,7 @@ class LedNameBadge:
 
         if method not in ('libusb', 'hidapi', 'auto'):
             print("Unknown write method '%s'." % (method,))
+            print("Available options: 'libusb', 'hidapi' and 'auto' (default)")
             sys.exit(1)
 
         # Python2 only with libusb
@@ -635,15 +636,15 @@ class LedNameBadge:
             if sys.version_info[0] < 3:
                 method = 'libusb'
                 print("Preferring method 'libusb' over 'hidapi' with Python 2.x because of https://github.com/jnweiger/led-badge-ls32/issues/9")
-            elif sys.platform == 'darwin':
+            elif sys.platform.startswith('darwin'):
                 method = 'hidapi'
                 print("Selected method 'hidapi' with MacOs")
-            elif sys.platform == 'windows':
+            elif sys.platform.startswith('win'):
                 method = 'libusb'
                 print("Selected method 'libusb' with Windows")
 
         if method == 'libusb':
-            if sys.platform == 'darwin':
+            if sys.platform.startswith('darwin'):
                 print("For MacOs, please use method 'hidapi' or 'auto'.")
                 print("Or help us implementing support for MacOs.")
                 sys.exit(1)
@@ -652,15 +653,15 @@ class LedNameBadge:
                 print("* Have you installed the Module? Try:")
                 print("  $ pip install pyusb")
                 LedNameBadge._print_install_hints()
-                if sys.platform == 'windows':
+                if sys.platform.startswith('win'):
                     print("* Have you installed the libusb driver or libusb-filter for the device?")
-                elif 'linux' in sys.platform:
+                elif sys.platform.startswith('linux'):
                     print("* Is the library itself installed? Try (or similar, suitable for your distro):")
                     print("  $ sudo apt-get install libusb-1.0-0")
                 sys.exit(1)
 
         if method == 'hidapi':
-            if sys.platform == 'windows':
+            if sys.platform.startswith('win'):
                 print("For Windows, please use method 'libusb' or 'auto'.")
                 print("Or help us implementing support for Windows.")
                 sys.exit(1)
@@ -672,10 +673,10 @@ class LedNameBadge:
                 print("* Have you installed the Module? Try:")
                 print("  $ pip install pyhidapi")
                 LedNameBadge._print_install_hints()
-                if sys.platform == 'darwin':
+                if sys.platform.startswith('darwin'):
                     print("* Have you installed the library itself? Try:")
                     print("  $ brew install hidapi")
-                elif 'linux' in sys.platform:
+                elif sys.platform.startswith('linux'):
                     print("* Is the library itself installed? Try (or similar, suitable for your distro):")
                     print("  $ sudo apt-get install libhidapi-hidraw0")
                     print("* If the library is still not found by the module, try (or similar, suitable for you distro):")
@@ -701,7 +702,7 @@ class LedNameBadge:
         print("* Is a led tag device with vendorID 0x0416 and productID 0x5020 connected?")
         if endpoint != 'auto':
             print("* Have you given the right endpoint?")
-            if 'linux' in sys.platform:
+            if sys.platform.startswith('linux'):
                 print("  Try this to find the available endpoint addresses:")
                 print('  $ lsusb -d 0416:5020 -v | grep -i "endpoint.*out"')
         print("* If it is connected and still do not work, maybe you have to run")
@@ -712,7 +713,7 @@ class LedNameBadge:
     def _print_install_hints():
         print("  (You may need to use pip3 or pip2 instead of pip depending on your python version.)")
         print("  (You may need prepend 'sudo' for system wide module installation.)")
-        if 'linux' in sys.platform:
+        if sys.platform.startswith('linux'):
             print("  (You may also use your package manager, but the exact package might be different.")
             print("   E.g. 'sudo apt install python3-usb' for pyusb)")
         

@@ -47,20 +47,23 @@ access to the badge via USB.
  
 Using a venv will allow to use pip to install dependencies without the danger
 that the installed modules will interfere with the system installed ones.
+On some systems (esp. those with Python 2 *and* 3 installed), you have to
+address Python 3 explicitly by using the commands `python3` / `pip3` instead
+of `python` / `pip`.
 
     sudo apt install python3-venv
-    python3 -m venv ledtag
+    python -m venv ledtag
     source ledtag/bin/activate
     pip install pyhidapi pyusb pillow
     # this should now work:
-    # python3 led-badge-11x44.py -m 6 -s 8 "Hello" "World!"
+    # python led-badge-11x44.py -m 6 -s 8 "Hello" "World!"
 
 if the udev rules are installed, you should be able to access the badge without sudo / root privileges.
 
 To reuse the venv again at a later point:
 
     source ledtag/bin/activate
-    python3 led-badge-11x44.py …
+    python led-badge-11x44.py …
 
 ### Required dependencies on Fedora Systems
 
@@ -76,15 +79,14 @@ library to the needed place, e.g.
 
 ### Required dependencies on Mac Systems
 
+On some systems (esp. those with Python 2 *and* 3 installed), you have to
+address Python 3 explicitly by using the command `pip3` instead of `pip`.
+
     sudo easy_install pip
     pip install pyhidapi
     pip install pillow
     ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" < /dev/null 2> /dev/null
     brew install hidapi
-
-or Try with
-
-    pip3 install pyhidapi
 
 ### Required dependencies on Windows 7/10
 
@@ -115,7 +117,9 @@ or specific versions from [here](https://www.python.org/downloads/windows/)
         - `[x]` Add Python X.Y to PATH
     - Click the `Install Now ...` text message.
 
-Install needed the Python packages.
+Install needed the Python packages. On some systems (esp. those with Python 2
+*and* 3 installed), you have to address Python 3 explicitly by using the
+command `pip3` instead of `pip`.
 
 - Run cmd.exe as Administrator, enter:
 
@@ -125,11 +129,12 @@ Install needed the Python packages.
 #### Examples:
 
 To run these examples on linux, you might have to prepend `sudo` for accessing
-the USB device. On Windows, maybe you have to run the `cmd`, where you enter the
-commands, with `Run as administrator`, which is similar to the `sudo`on linux.
+the USB device or install a udev rule as stated above. On Windows, maybe you
+have to run the `cmd`, where you enter the commands, with `Run as administrator`,
+which is similar to the `sudo`on linux.
 
-On systems with Python 2 *and* 3 installed, you might want to use Python 3
-explicitely by using `python3` instead of `python`.
+On some systems (esp. those with Python 2 *and* 3 installed), you have to
+address Python 3 explicitly by using `python3` instead of `python`.
 
     python ./led-badge-11x44.py "Hello World!"
 

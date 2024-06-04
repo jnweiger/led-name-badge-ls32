@@ -95,10 +95,10 @@ in a quite low level way and in a quite old version:
 - Please use version 1.2.6.0 of 'usblib-win32`. It's still available on the
   [old project repo on SourceForge](https://sourceforge.net/projects/libusb-win32/files/libusb-win32-releases/1.2.6.0/)
 - Then
-	- Extract `bin/inf-wizard.exe` from the downloaded zip file. Right click and `Run as Administrator`
-	- `Next` -> Select `0x0416 0x5020 LS32 Custm HID` (or similar with the same IDs)
-	- `Next` -> `Next` -> Save as dialog `LS32_Sustm_HID.inf` -> `Save` (just to proceed, we don't need that file)
-	- `Install Now...` -> Driver Install Complete -> `OK`
+    - Extract `bin/inf-wizard.exe` from the downloaded zip file. Right click and `Run as Administrator`
+    - `Next` -> Select `0x0416 0x5020 LS32 Custm HID` (or similar with the same IDs)
+    - `Next` -> `Next` -> Save as dialog `LS32_Sustm_HID.inf` -> `Save` (just to proceed, we don't need that file)
+    - `Install Now...` -> Driver Install Complete -> `OK`
 
 There are other - meanwhile recommended, but untested here - ways to install and setup
 newer versions of `libus-win32`: use
@@ -110,16 +110,16 @@ Of course, Python is needed:
 
 - Download latest python from [python.org](https://www.python.org/downloads/),
 or specific versions from [here](https://www.python.org/downloads/windows/)
-	- Checkmark the following options
-		- `[x]` install Launcher for all Users
-		- `[x]` Add Python X.Y to PATH
-	- Click the `Install Now ...` text message.
+    - Checkmark the following options
+        - `[x]` install Launcher for all Users
+        - `[x]` Add Python X.Y to PATH
+    - Click the `Install Now ...` text message.
 
 Install needed the Python packages.
 
 - Run cmd.exe as Administrator, enter:
 
-		pip install pyusb
+        pip install pyusb
         pip install pillow
 
 #### Examples:

@@ -739,11 +739,13 @@ class LedNameBadge:
     @staticmethod
     def _print_common_install_hints():
         print("  (You may need to use pip3 or pip2 instead of pip depending on your python version.)")
-        print("  (You may need prepend 'sudo' for system wide module installation.)")
+        if sys.platform.startswith('win'):
+            print("  (You may need to run cmd.exe as Administrator for system wide module installation.)")
         if sys.platform.startswith('linux'):
-            print("  (You may also use your package manager, but the exact package might be different.")
+            print("  (You may need prepend 'sudo' for system wide module installation.)")
+            print("  (You may also use your package manager, but the exact package name might be different.")
             print("   E.g. 'sudo apt install python3-usb' for pyusb)")
-        
+
 
 def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,

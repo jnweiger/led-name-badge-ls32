@@ -436,6 +436,7 @@ class WriteLibUsb(WriteMethod):
     _module_loaded = False
     try:
         import usb.core
+        import usb.util
         _module_loaded = True
         print("Module usb.core detected")
     except:
@@ -480,6 +481,9 @@ class WriteLibUsb(WriteMethod):
         for i in range(int(len(buf) / 64)):
             time.sleep(0.1)
             self.dev.write(1, buf[i * 64:i * 64 + 64])
+        WriteLibUsb.usb.util.dispose_resources(self.dev)
+        self.dev.reset()
+        self.dev = None
 
 
 class WriteUsbHidApi(WriteMethod):
@@ -525,6 +529,7 @@ class WriteUsbHidApi(WriteMethod):
             sendbuf.extend(buf[i*64:i*64+64])
             WriteUsbHidApi.pyhidapi.hid_write(self.dev, sendbuf)
         WriteUsbHidApi.pyhidapi.hid_close(self.dev)
+        self.dev = None
 
 
 class LedNameBadge:

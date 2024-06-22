@@ -60,7 +60,9 @@
 #     * There is some initialization code executed in the classes not needed, if not imported. This is nagging me
 #       somehow, but it is acceptable, as we do not need to save every processor cycle, here :)
 #     * Have fun!
-# v0.14, 2024-06-02, bs preparation for automatic or manual endpoint and bluetooth.
+# v0.14, 2024-06-02, bs extending write methods.
+#     * Preparation for further write methods, like bluetooth.
+#     * Automatic or manual device and endpoint selection, See -M and -D (substituting -H)
 
 
 import argparse
@@ -369,7 +371,7 @@ class SimpleTextAndIcons:
         except:
             print("If you like to use images, the module pillow is needed. Try:")
             print("$ pip install pillow")
-            LedNameBadge._print_common_install_hints()
+            LedNameBadge._print_common_install_hints('pillow', 'python3-pillow')
             sys.exit(1)
 
         im = Image.open(file)
@@ -410,53 +412,47 @@ class SimpleTextAndIcons:
 
 class WriteMethod:
     def __init__(self):
-        self.devices = None
+        self.devices = {}
 
     def __del__(self):
         self.close()
 
+    def get_name(self):
+        raise NotImplementedError()
+
+    def get_description(self):
+        raise NotImplementedError()
+
     def open(self, device_id):
-        if self.is_ready():
-            self.devices = self._get_available_devices()
-            if self.devices and len(self.devices) > 0:
-                if device_id == 'auto' and len(self.devices) > 0:
-                    # /***/ was, wenn kein gerät angeschlossen?
-                    device_id = sorted(self.devices.keys())[0]
-                elif device_id == 'list':
-                    self.print_devices()
-                    sys.exit(0)
-                elif device_id not in self.devices.keys():
-                    print("Device ID '%s' is unknown. Please choose from:" % (device_id,))
-                    self.print_devices()
-                    sys.exit(1)
-                return self._open(device_id)
-        # /***/ was wenn kein Device? -> Alle Meldungen hier raus in die vorbereitung
-        return None
+        if self.is_ready() and self.is_device_present():
+            actual_device_id = None
+            if device_id == 'auto':
+                actual_device_id = sorted(self.devices.keys())[0]
+            else:
+                if device_id in self.devices.keys():
+                    actual_device_id = device_id
+
+            if actual_device_id:
+                return self._open(actual_device_id)
+        return False
 
     def close(self):
         raise NotImplementedError()
 
-    def print_devices(self):
-        for k, d in self.devices.items():
-            print("'%s': %s" % (k, d[0]))
+    def get_available_devices(self):
+        if self.is_ready() and not self.devices:
+            self.devices = self._get_available_devices()
+        return {id: data[0] for id, data in self.devices.items()}
+
+    def is_device_present(self):
+        self.get_available_devices()
+        return self.devices and len(self.devices) > 0
 
     def _open(self, device_id):
         raise NotImplementedError()
 
     def _get_available_devices(self):
         raise NotImplementedError()
-
-    @staticmethod
-    def add_padding(buf, blocksize):
-        need_padding = len(buf) % blocksize
-        if need_padding:
-            buf.extend((0,) * (blocksize - need_padding))
-
-    @staticmethod
-    def check_length(buf, maxsize):
-        if len(buf) > maxsize:
-            print("Writing more than %d bytes damages the display!" % (maxsize,))
-            sys.exit(1)
 
     def is_ready(self):
         raise NotImplementedError()
@@ -468,6 +464,18 @@ class WriteMethod:
         self.add_padding(buf, 64)
         self.check_length(buf, 8192)
         self._write(buf)
+
+    @staticmethod
+    def add_padding(buf, blocksize):
+        need_padding = len(buf) % blocksize
+        if need_padding:
+            buf.extend((0,) * (blocksize - need_padding))
+
+    @staticmethod
+    def check_length(buf, maxsize):
+        if len(buf) > maxsize:
+            print("Writing more than %d bytes damages the display! Nothing written." % (maxsize,))
+            sys.exit(1)
 
     def _write(self, buf):
         raise NotImplementedError()
@@ -488,6 +496,12 @@ class WriteLibUsb(WriteMethod):
         self.dev = None
         self.endpoint = None
 
+    def get_name(self):
+        return 'libusb'
+
+    def get_description(self):
+        return 'Program a device connected via USB using the pyusb package and libusb.'
+
     def _open(self, device_id):
         self.description = self.devices[device_id][0]
         self.dev = self.devices[device_id][1]
@@ -496,19 +510,14 @@ class WriteLibUsb(WriteMethod):
         return True
 
     def close(self):
-        if self.devices:
-            for k, d in self.devices.items():
-                d[1].reset()
-                WriteLibUsb.usb.util.dispose_resources(d[1])
+        for k, d in self.devices.items():
+            d[1].reset()
+            WriteLibUsb.usb.util.dispose_resources(d[1])
         self.description = None
         self.dev = None
         self.endpoint = None
-        print("Libusb: device resources freed")
 
     def _get_available_devices(self):
-        if not self.is_ready():
-            return {}
-
         devs = WriteLibUsb.usb.core.find(idVendor=0x0416, idProduct=0x5020, find_all=True)
         devices = {}
         for d in devs:
@@ -521,8 +530,8 @@ class WriteLibUsb(WriteMethod):
             try:
                 d.set_configuration()
             except(WriteLibUsb.usb.core.USBError):
+                # TODO: use all the nice output in _find_write_method(), somehow.
                 print("No write access to device!")
-                # /***/
                 print("Maybe, you have to run this program with administrator rights.")
                 if sys.platform.startswith('linux'):
                     print("* Try with sudo or add a udev rule like described in README.md.")
@@ -533,7 +542,7 @@ class WriteLibUsb(WriteMethod):
                 WriteLibUsb.usb.util.endpoint_direction(e.bEndpointAddress) == WriteLibUsb.usb.util.ENDPOINT_OUT)
             for ep in eps:
                 id = "%d:%d:%d" % (d.bus, d.address, ep.bEndpointAddress)
-                descr = "'%s %s' (bus=%d dev=%d endpoint=%d)" % (d.manufacturer, d.product, d.bus, d.address, ep.bEndpointAddress)
+                descr = "%s - %s (bus=%d dev=%d endpoint=%d)" % (d.manufacturer, d.product, d.bus, d.address, ep.bEndpointAddress)
                 devices[id] = (descr, d, ep)
         return devices
 
@@ -557,6 +566,7 @@ class WriteLibUsb(WriteMethod):
         try:
             self.dev.set_configuration()
         except(WriteLibUsb.usb.core.USBError):
+            # TODO: use all the nice output in _find_write_method(), somehow.
             print("No write access to device!")
             print("Maybe, you have to run this program with administrator rights.")
             if sys.platform.startswith('linux'):
@@ -585,6 +595,12 @@ class WriteUsbHidApi(WriteMethod):
         self.path = None
         self.dev = None
 
+    def get_name(self):
+        return 'hidapi'
+
+    def get_description(self):
+        return 'Program a device connected via USB using the pyhidapi package and libhidapi.'
+
     def _open(self, device_id):
         self.description = self.devices[device_id][0]
         self.path = self.devices[device_id][1]
@@ -600,14 +616,13 @@ class WriteUsbHidApi(WriteMethod):
         self.description = None
         self.path = None
         self.dev = None
-        print("Hidapi: device resources freed")
 
     def _get_available_devices(self):
         device_infos = WriteUsbHidApi.pyhidapi.hid_enumerate(0x0416, 0x5020)
         devices = {}
         for d in device_infos:
             id = "%s" % (str(d.path.decode('ascii')),)
-            descr = "'%s %s' (if=%d)" % (d.manufacturer_string, d.product_string, d.interface_number)
+            descr = "%s - %s (if=%d)" % (d.manufacturer_string, d.product_string, d.interface_number)
             devices[id] = (descr, d.path)
         return devices
 
@@ -720,126 +735,178 @@ class LedNameBadge:
         write_method = LedNameBadge._find_write_method(method, device_id)
         if write_method:
             write_method.write(buf)
+            write_method.close()
+
+    @staticmethod
+    def get_available_methods():
+        auto_order_methods = LedNameBadge.get_auto_order_method_list()
+        return {m.get_name(): m.is_ready() for m in auto_order_methods}
+
+    @staticmethod
+    def get_available_device_ids(method):
+        auto_order_methods = LedNameBadge.get_auto_order_method_list()
+        wanted_method = [m for m in auto_order_methods if m.get_name() == method]
+        if wanted_method:
+            return wanted_method[0].get_available_devices()
+        return []
 
     @staticmethod
     def _find_write_method(method, device_id):
-        if method not in ('libusb', 'hidapi', 'auto'):
+        auto_order_methods = LedNameBadge.get_auto_order_method_list()
+        hidapi = [m for m in auto_order_methods if m.get_name() == 'hidapi'][0]
+        libusb = [m for m in auto_order_methods if m.get_name() == 'libusb'][0]
+
+        if method == 'list':
+            LedNameBadge._print_available_methods(auto_order_methods)
+            sys.exit(0)
+
+        if method not in [m.get_name() for m in auto_order_methods] and method != 'auto':
             print("Unknown write method '%s'." % (method,))
-            print("Available options: 'libusb', 'hidapi' and 'auto' (default)")
+            LedNameBadge._print_available_methods(auto_order_methods)
             sys.exit(1)
 
-        libusb = WriteLibUsb()
-        hidapi = WriteUsbHidApi()
-
-        # Python2 only with libusb
         if method == 'auto':
             if sys.version_info[0] < 3:
-                method = 'libusb'
-                print("Preferring method 'libusb' over 'hidapi' with Python 2.x because of https://github.com/jnweiger/led-badge-ls32/issues/9")
+                method = libusb.get_name()
+                print("Preferring method %s over %s with Python 2.x" % (libusb.get_name(), hidapi.get_name()))
+                print("because of https://github.com/jnweiger/led-badge-ls32/issues/9")
             elif sys.platform.startswith('darwin'):
-                method = 'hidapi'
-                print("Selected method 'hidapi' with MacOs")
+                method = hidapi.get_name()
+                print("Selected method %s with MacOs" % (hidapi.get_name(),))
             elif sys.platform.startswith('win'):
-                method = 'libusb'
-                print("Selected method 'libusb' with Windows")
+                method = libusb.get_name()
+                print("Selected method %s with Windows" % (libusb.get_name(),))
             elif not libusb.is_ready() and not hidapi.is_ready():
                 if sys.version_info[0] < 3 or sys.platform.startswith('win'):
-                    print("You need the usb.core module.")
-                    LedNameBadge._print_libusb_install_hints()
+                    LedNameBadge._print_libusb_install_hints(libusb.get_name())
                     sys.exit(1)
                 elif sys.platform.startswith('darwin'):
-                    print("You need the pyhidapi module.")
-                    LedNameBadge._print_hidapi_install_hints()
+                    LedNameBadge._print_hidapi_install_hints(hidapi.get_name())
                     sys.exit(1)
                 else:
-                    print("You need the pyhidapi or usb.core module.")
-                    LedNameBadge._print_libusb_install_hints()
-                    LedNameBadge._print_hidapi_install_hints()
+                    print("One of the python packages 'pyhidapi' or 'pyusb' is needed to run this program (or both).")
+                    LedNameBadge._print_libusb_install_hints(libusb.get_name())
+                    LedNameBadge._print_hidapi_install_hints(hidapi.get_name())
                     sys.exit(1)
 
-        if method == 'libusb':
+        if method == libusb.get_name():
             if sys.platform.startswith('darwin'):
-                print("For MacOs, please use method 'hidapi' or 'auto'.")
+                print("For MacOs, please use method '%s' or 'auto'." % (hidapi.get_name(),))
                 print("Or help us implementing support for MacOs.")
                 sys.exit(1)
             elif not libusb.is_ready():
-                LedNameBadge._print_libusb_install_hints()
+                LedNameBadge._print_libusb_install_hints(libusb.get_name())
                 sys.exit(1)
 
-        if method == 'hidapi':
+        if method == hidapi.get_name():
             if sys.platform.startswith('win'):
-                print("For Windows, please use method 'libusb' or 'auto'.")
+                print("For Windows, please use method '%s' or 'auto'." % (libusb.get_name(),))
                 print("Or help us implementing support for Windows.")
                 sys.exit(1)
             elif sys.version_info[0] < 3:
-                print("Please use method 'libusb' or 'auto' with python-2.x because of https://github.com/jnweiger/led-badge-ls32/issues/9")
+                print("Please use method '%s' or 'auto' with python-2.x" % (libusb.get_name(),))
+                print("because of https://github.com/jnweiger/led-badge-ls32/issues/9")
                 sys.exit(1)
             elif not hidapi.is_ready():
-                LedNameBadge._print_hidapi_install_hints()
+                LedNameBadge._print_hidapi_install_hints(hidapi.get_name())
                 sys.exit(1)
 
-        if (method == 'auto' or method == 'hidapi'):
-            method_obj = hidapi
-            if method_obj.open(device_id):
-                return method_obj
-
-        if (method == 'auto' or method == 'libusb'):
-            method_obj = libusb
-            if method_obj.open(device_id):
-                return method_obj
+        first_method_found = None
+        for m in auto_order_methods:
+            if method == 'auto' or method == m.get_name():
+                if not first_method_found:
+                    first_method_found = m
+                if device_id == 'list':
+                    LedNameBadge._print_available_devices(m)
+                    sys.exit(0)
+                elif m.open(device_id):
+                    return m
 
         device_id_str = ''
         if device_id != 'auto':
             device_id_str = ' with device_id %s' % (device_id,)
 
         print("The device is not available with write method '%s'%s." % (method, device_id_str))
+        if first_method_found:
+            LedNameBadge._print_available_devices(first_method_found)
         print("* Is a led tag device with vendorID 0x0416 and productID 0x5020 connected?")
         if device_id != 'auto':
             print("* Have you given the right device_id?")
-            if sys.platform.startswith('linux'):
-                # /***/
-                print("  Try this to find the available endpoint addresses:")
-                print('  $ lsusb -d 0416:5020 -v | grep -i "endpoint.*out"')
+            print("  Find the available device ids with option -D list")
         print("* If it is connected and still do not work, maybe you have to run")
         print("  this program as root.")
         sys.exit(1)
 
     @staticmethod
-    def _print_libusb_install_hints():
-        print("The method 'libusb' is not possible to be used: The module usb.core could not be loaded.")
-        print("* Have you installed the Module? Try:")
+    def get_auto_order_method_list():
+        return [WriteUsbHidApi(), WriteLibUsb()]
+
+    @staticmethod
+    def _print_available_methods(methods):
+        print("Available write methods:")
+        print("  'auto': selects the most appropriate of the available methods (default)")
+        for m in methods:
+            LedNameBadge._print_one_method(m)
+
+    @staticmethod
+    def _print_one_method(m):
+        print("  '%s': %s" % (m.get_name(), m.get_description()))
+
+    @staticmethod
+    def _print_available_devices(method_obj):
+        if method_obj.is_device_present():
+            print("Known device ids with method '%s' are:" % (method_obj.get_name(),))
+            for id, descr in sorted(method_obj.get_available_devices().items()):
+                LedNameBadge.print_one_device(id, descr)
+        else:
+            print("No devices with method '%s' found." % (method_obj.get_name(),))
+
+    @staticmethod
+    def print_one_device(id, descr):
+        print("  '%s': %s" % (id, descr))
+
+    @staticmethod
+    def _print_libusb_install_hints(name):
+        print("The method %s is not possible to be used:" % (name,))
+        print("The modules 'usb.core' and 'usb.util' could not be loaded.")
+        print("* Have you installed the corresponding python package 'pyusb'? Try:")
         print("  $ pip install pyusb")
-        LedNameBadge._print_common_install_hints()
+        LedNameBadge._print_common_install_hints('pyusb', 'python3-usb')
         if sys.platform.startswith('win'):
             print("* Have you installed the libusb driver or libusb-filter for the device?")
         elif sys.platform.startswith('linux'):
-            print("* Is the library itself installed? Try (or similar, suitable for your distro):")
+            print("* Is the library itself installed? Try the following")
+            print("  (or similar, suitable for your distro; the exact command and package name might be different):")
             print("  $ sudo apt-get install libusb-1.0-0")
 
     @staticmethod
-    def _print_hidapi_install_hints():
-        print("The method 'hidapi' is not possible to be used: The module pyhidapi could not be loaded.")
-        print("* Have you installed the Module? Try:")
+    def _print_hidapi_install_hints(name):
+        print("The method %s is not possible to be used:" % (name,))
+        print("The module 'pyhidapi' could not be loaded.")
+        print("* Have you installed the corresponding python package 'pyhidapi'? Try:")
         print("  $ pip install pyhidapi")
-        LedNameBadge._print_common_install_hints()
+        LedNameBadge._print_common_install_hints('pyhidapi', 'python3-hidapi')
         if sys.platform.startswith('darwin'):
             print("* Have you installed the library itself? Try:")
             print("  $ brew install hidapi")
         elif sys.platform.startswith('linux'):
-            print("* Is the library itself installed? Try (or similar, suitable for your distro):")
+            print("* Is the library itself installed? Try the following")
+            print("  (or similar, suitable for your distro; the exact command and package name might be different):")
             print("  $ sudo apt-get install libhidapi-hidraw0")
-            print("* If the library is still not found by the module, try (or similar, suitable for you distro):")
+            print("* If the library is still not found by the module. Try the following")
+            print("  (or similar, suitable for your distro; the exact command, library name and paths might be different):")
             print("  $ sudo ln -s /usr/lib/x86_64-linux-gnu/libhidapi-hidraw.so.0  /usr/local/lib/")
 
     @staticmethod
-    def _print_common_install_hints():
+    def _print_common_install_hints(pip_package, pm_package):
         print("  (You may need to use pip3 or pip2 instead of pip depending on your python version.)")
         if sys.platform.startswith('win'):
             print("  (You may need to run cmd.exe as Administrator for system wide module installation.)")
         if sys.platform.startswith('linux'):
             print("  (You may need prepend 'sudo' for system wide module installation.)")
-            print("  (You may also use your package manager, but the exact package name might be different.")
-            print("   E.g. 'sudo apt install python3-usb' for pyusb)")
+            print("  (You may also use your package manager. Try the following, e.g for %s)" % (pip_package,))
+            print("  (or similar, suitable for your distro; the exact command and package name might be different):")
+            print("  $ sudo apt install %s" % (pm_package))
 
 
 def main():
@@ -849,7 +916,7 @@ def main():
     parser.add_argument('-t', '--type', default='11x44',
                         help="Type of display: supported values are 12x48 or (default) 11x44. Rename the program to led-badge-12x48, to switch the default.")
     parser.add_argument('-H', '--hid', default='0', help="Deprecated, only for backwards compatibility, please use -M! Set to 1 to ensure connect via HID API, program will then not fallback to usb.core library.")
-    parser.add_argument('-M', '--method', default='auto', help="Force using the given write method ('hidapi' or 'libusb').")
+    parser.add_argument('-M', '--method', default='auto', help="Force using the given write method. Use one of 'auto', 'list' or whatever list is printing.")
     parser.add_argument('-D', '--device-id', default='auto', help="Force using the given device id, if ambiguous. Usue one of 'auto', 'list' or whatever list is printing.")
     parser.add_argument('-s', '--speed', default='4', help="Scroll speed (Range 1..8). Up to 8 comma-separated values.")
     parser.add_argument('-B', '--brightness', default='100',
@@ -927,10 +994,11 @@ def main():
     # Translate -H to -M parameter
     method = args.method
     if args.hid == 1:
+        print("Option -H is deprecated, please use -M!")
         if not method or method == 'auto':
             method = 'hidapi'
         else:
-            sys.exit("Parameter values are ambiguous. Please use either -H or -M.")
+            sys.exit("Parameter values are ambiguous. Please use -M only.")
 
     LedNameBadge.write(buf, method, args.device_id)
 

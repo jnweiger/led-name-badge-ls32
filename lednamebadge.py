@@ -551,6 +551,7 @@ or
                 print("No led tag with vendorID 0x0416 and productID 0x5020 found.")
                 print("Connect the led tag and run this tool as root.")
                 sys.exit(1)
+
             for i in range(int(len(buf)/64)):
                 # sendbuf must contain "report ID" as first byte. "0" does the job here.
                 sendbuf=array('B',[0])

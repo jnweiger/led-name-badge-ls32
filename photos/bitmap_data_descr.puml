@@ -1,9 +1,11 @@
+' Using <U+002E>.. for three dots / ellipsis, els it would be a dotted line
+
 @startuml bitmap_data_onebyte
 salt
 title One byte
 {#
  { most significant bit 7
- leftmost pixel } | bit 6 | ... | bit 1 | { least significant bit 0
+ leftmost pixel } | bit 6 | <U+002E>.. | bit 1 | { least significant bit 0
  rightmost pixel }
 }
 @enduml
@@ -12,17 +14,17 @@ title One byte
 salt
 title One scene
 {#
- byte 0 == 8 pixel | byte 11 == 8 pixel | byte 22 == 8 pixel | ...
- byte 1 ...        | byte 12 ...        | byte 23 ...        | ...
- byte 2 ...        | byte 13 ...        | byte 24 ...        | ...
- byte 3 ...        | byte 14 ...        | byte 25 ...        | ...
- byte 4 ...        | byte 15 ...        | byte 26 ...        | ...
- byte 5 ...        | byte 16 ...        | byte 27 ...        | ...
- byte 6 ...        | byte 17 ...        | byte 28 ...        | ...
- byte 7 ...        | byte 18 ...        | byte 29 ...        | ...
- byte 8 ...        | byte 19 ...        | byte 30 ...        | ...
- byte 9 ...        | byte 20 ...        | byte 31 ...        | ...
- byte 10 ...       | byte 21 ...        | byte 32 ...        | ...
+ byte 0 == 8 pixel | byte 11 == 8 pixel | byte 22 == 8 pixel | <U+002E>..
+ byte 1 ...        | byte 12 ...        | byte 23 ...        | <U+002E>..
+ byte 2 ...        | byte 13 ...        | byte 24 ...        | <U+002E>..
+ byte 3 ...        | byte 14 ...        | byte 25 ...        | <U+002E>..
+ byte 4 ...        | byte 15 ...        | byte 26 ...        | <U+002E>..
+ byte 5 ...        | byte 16 ...        | byte 27 ...        | <U+002E>..
+ byte 6 ...        | byte 17 ...        | byte 28 ...        | <U+002E>..
+ byte 7 ...        | byte 18 ...        | byte 29 ...        | <U+002E>..
+ byte 8 ...        | byte 19 ...        | byte 30 ...        | <U+002E>..
+ byte 9 ...        | byte 20 ...        | byte 31 ...        | <U+002E>..
+ byte 10 ...       | byte 21 ...        | byte 32 ...        | <U+002E>..
 }
 @enduml
 
@@ -30,6 +32,6 @@ title One scene
 salt
 title Complete bitmap data
 {#
- scene 0 == x bytes | ... | scene n == z bytes
+ scene 0 == x bytes | <U+002E>.. | scene n == z bytes
 }
 @enduml

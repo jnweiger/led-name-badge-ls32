@@ -95,7 +95,7 @@ For Windows, we need to set up the libusb API for the LED badge device.
 The way described here, uses [libusb-win32](https://github.com/mcuee/libusb-win32/wiki)
 in a quite low level way and in a quite old version:
 
-- Please use version 1.2.6.0 of 'usblib-win32`. It's still available on the
+- Please use version 1.2.6.0 of 'libusb-win32`. It's still available on the
   [old project repo on SourceForge](https://sourceforge.net/projects/libusb-win32/files/libusb-win32-releases/1.2.6.0/)
 - Then
     - Extract the downloaded zip file and go to the directory `libusb-win32-bin-1.2.6.0\bin`
@@ -105,7 +105,7 @@ in a quite low level way and in a quite old version:
     - `Install Now...` -> Driver Install Complete -> `OK`
 
 There are other - meanwhile recommended, but untested here - ways to install and setup
-newer versions of `libus-win32`: use
+newer versions of `libusb-win32`: use
 [Zadig](https://zadig.akeo.ie/) (it is also available from the old libusb-win32 repo on
 [GitHub repo](https://github.com/mcuee/libusb-win32/releases) of newer releases)
 or [libusbK](https://libusbk.sourceforge.net/UsbK3/index.html)
@@ -235,7 +235,7 @@ options:
                         Force using the given write method. Use one of 'auto',
                         'list' or whatever list is printing.
   -D DEVICE_ID, --device-id DEVICE_ID
-                        Force using the given device id, if ambiguous. Usue
+                        Force using the given device id, if ambiguous. Use
                         one of 'auto', 'list' or whatever list is printing.
   -s SPEED, --speed SPEED
                         Scroll speed (Range 1..8). Up to 8 comma-separated

@@ -20,7 +20,7 @@
 # The way described here, uses [libusb-win32](https://github.com/mcuee/libusb-win32/wiki)
 # in a quite low level way and in a quite old version:
 #
-# - Please use version 1.2.6.0 of 'usblib-win32`. It's still available on the
+# - Please use version 1.2.6.0 of 'libusb-win32`. It's still available on the
 #   [old project repo on SourceForge](https://sourceforge.net/projects/libusb-win32/files/libusb-win32-releases/1.2.6.0/)
 # - Then
 #     - Extract the downloaded zip file and go to the directory `libusb-win32-bin-1.2.6.0\bin`
@@ -30,7 +30,7 @@
 #     - `Install Now...` -> Driver Install Complete -> `OK`
 #
 # There are other - meanwhile recommended, but untested here - ways to install and setup
-# newer versions of `libus-win32`: use
+# newer versions of `libusb-win32`: use
 # [Zadig](https://zadig.akeo.ie/) (it is also available from the old libusb-win32 repo on
 # [GitHub repo](https://github.com/mcuee/libusb-win32/releases) of newer releases)
 # or [libusbK](https://libusbk.sourceforge.net/UsbK3/index.html)
@@ -268,7 +268,7 @@ class SimpleTextAndIcons:
         # print(i, charmap[i], char_offsets[charmap[i]])
 
     bitmap_named = {
-        'ball': (array('B', (
+        'ball':      (array('B', (
             0b00000000,
             0b00000000,
             0b00111100,
@@ -281,7 +281,7 @@ class SimpleTextAndIcons:
             0b00111100,
             0b00000000
         )), 1, '\x1e'),
-        'happy': (array('B', (
+        'happy':     (array('B', (
             0b00000000,  # 0x00
             0b00000000,  # 0x00
             0b00111100,  # 0x3c
@@ -294,25 +294,25 @@ class SimpleTextAndIcons:
             0b00111100,  # 0x3c
             0b00000000  # 0x00
         )), 1, '\x1d'),
-        'happy2': (array('B', (0x00, 0x08, 0x14, 0x08, 0x01, 0x00, 0x00, 0x61, 0x30, 0x1c, 0x07,
-                               0x00, 0x20, 0x50, 0x20, 0x00, 0x80, 0x80, 0x86, 0x0c, 0x38, 0xe0)), 2, '\x1c'),
-        'heart': (array('B', (0x00, 0x00, 0x6c, 0x92, 0x82, 0x82, 0x44, 0x28, 0x10, 0x00, 0x00)), 1, '\x1b'),
-        'HEART': (array('B', (0x00, 0x00, 0x6c, 0xfe, 0xfe, 0xfe, 0x7c, 0x38, 0x10, 0x00, 0x00)), 1, '\x1a'),
-        'heart2': (array('B', (0x00, 0x0c, 0x12, 0x21, 0x20, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01,
-                               0x00, 0x60, 0x90, 0x08, 0x08, 0x08, 0x10, 0x20, 0x40, 0x80, 0x00)), 2, '\x19'),
-        'HEART2': (array('B', (0x00, 0x0c, 0x1e, 0x3f, 0x3f, 0x3f, 0x1f, 0x0f, 0x07, 0x03, 0x01,
-                               0x00, 0x60, 0xf0, 0xf8, 0xf8, 0xf8, 0xf0, 0xe0, 0xc0, 0x80, 0x00)), 2, '\x18'),
-        'fablab': (array('B', (0x07, 0x0e, 0x1b, 0x03, 0x21, 0x2c, 0x2e, 0x26, 0x14, 0x1c, 0x06,
-                               0x80, 0x60, 0x30, 0x80, 0x88, 0x38, 0xe8, 0xc8, 0x10, 0x30, 0xc0)), 2, '\x17'),
-        'bicycle': (array('B', (0x01, 0x02, 0x00, 0x01, 0x07, 0x09, 0x12, 0x12, 0x10, 0x08, 0x07,
-                                0x00, 0x87, 0x81, 0x5f, 0x22, 0x94, 0x49, 0x5f, 0x49, 0x80, 0x00,
-                                0x00, 0x80, 0x00, 0x80, 0x70, 0xc8, 0x24, 0xe4, 0x04, 0x88, 0x70)), 3, '\x16'),
+        'happy2':    (array('B', (0x00, 0x08, 0x14, 0x08, 0x01, 0x00, 0x00, 0x61, 0x30, 0x1c, 0x07,
+                                  0x00, 0x20, 0x50, 0x20, 0x00, 0x80, 0x80, 0x86, 0x0c, 0x38, 0xe0)), 2, '\x1c'),
+        'heart':     (array('B', (0x00, 0x00, 0x6c, 0x92, 0x82, 0x82, 0x44, 0x28, 0x10, 0x00, 0x00)), 1, '\x1b'),
+        'HEART':     (array('B', (0x00, 0x00, 0x6c, 0xfe, 0xfe, 0xfe, 0x7c, 0x38, 0x10, 0x00, 0x00)), 1, '\x1a'),
+        'heart2':    (array('B', (0x00, 0x0c, 0x12, 0x21, 0x20, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01,
+                                  0x00, 0x60, 0x90, 0x08, 0x08, 0x08, 0x10, 0x20, 0x40, 0x80, 0x00)), 2, '\x19'),
+        'HEART2':    (array('B', (0x00, 0x0c, 0x1e, 0x3f, 0x3f, 0x3f, 0x1f, 0x0f, 0x07, 0x03, 0x01,
+                                  0x00, 0x60, 0xf0, 0xf8, 0xf8, 0xf8, 0xf0, 0xe0, 0xc0, 0x80, 0x00)), 2, '\x18'),
+        'fablab':    (array('B', (0x07, 0x0e, 0x1b, 0x03, 0x21, 0x2c, 0x2e, 0x26, 0x14, 0x1c, 0x06,
+                                  0x80, 0x60, 0x30, 0x80, 0x88, 0x38, 0xe8, 0xc8, 0x10, 0x30, 0xc0)), 2, '\x17'),
+        'bicycle':   (array('B', (0x01, 0x02, 0x00, 0x01, 0x07, 0x09, 0x12, 0x12, 0x10, 0x08, 0x07,
+                                  0x00, 0x87, 0x81, 0x5f, 0x22, 0x94, 0x49, 0x5f, 0x49, 0x80, 0x00,
+                                  0x00, 0x80, 0x00, 0x80, 0x70, 0xc8, 0x24, 0xe4, 0x04, 0x88, 0x70)), 3, '\x16'),
         'bicycle_r': (array('B', (0x00, 0x00, 0x00, 0x00, 0x07, 0x09, 0x12, 0x13, 0x10, 0x08, 0x07,
                                   0x00, 0xf0, 0x40, 0xfd, 0x22, 0x94, 0x49, 0xfd, 0x49, 0x80, 0x00,
                                   0x40, 0xa0, 0x80, 0x40, 0x70, 0xc8, 0x24, 0x24, 0x04, 0x88, 0x70)), 3, '\x15'),
-        'owncloud': (array('B', (0x00, 0x01, 0x02, 0x03, 0x06, 0x0c, 0x1a, 0x13, 0x11, 0x19, 0x0f,
-                                 0x78, 0xcc, 0x87, 0xfc, 0x42, 0x81, 0x81, 0x81, 0x81, 0x43, 0xbd,
-                                 0x00, 0x00, 0x00, 0x80, 0x80, 0xe0, 0x30, 0x10, 0x28, 0x28, 0xd0)), 3, '\x14'),
+        'owncloud':  (array('B', (0x00, 0x01, 0x02, 0x03, 0x06, 0x0c, 0x1a, 0x13, 0x11, 0x19, 0x0f,
+                                  0x78, 0xcc, 0x87, 0xfc, 0x42, 0x81, 0x81, 0x81, 0x81, 0x43, 0xbd,
+                                  0x00, 0x00, 0x00, 0x80, 0x80, 0xe0, 0x30, 0x10, 0x28, 0x28, 0xd0)), 3, '\x14'),
     }
 
     bitmap_builtin = {}
@@ -349,7 +349,7 @@ class SimpleTextAndIcons:
             return self.bitmap_preloaded[ord(ch)]
 
         o = SimpleTextAndIcons.char_offsets[ch]
-        return (SimpleTextAndIcons.font_11x44[o:o + 11], 1)
+        return SimpleTextAndIcons.font_11x44[o:o + 11], 1
 
     def bitmap_text(self, text):
         """Returns a tuple of (buffer, length_in_byte_columns_aka_chars)
@@ -379,7 +379,7 @@ class SimpleTextAndIcons:
             (b, n) = self.bitmap_char(c)
             buf.extend(b)
             cols += n
-        return (buf, cols)
+        return buf, cols
 
     @staticmethod
     def bitmap_img(file):
@@ -421,7 +421,7 @@ class SimpleTextAndIcons:
                         byte_val += bit_val
                 buf.append(byte_val)
         im.close()
-        return (buf, cols)
+        return buf, cols
 
     def bitmap(self, arg):
         """If arg is a valid and existing path name, we load it as an image.
@@ -437,6 +437,7 @@ class WriteMethod:
     libraries or interfaces for communication. Basically it implements the common parts of the functionalities
     'device detection' and 'write data' and defines te interfaces to the user and the concrete write method class.
     """
+
     def __init__(self):
         """Call it from your concrete class in your __init__ method with!
         """
@@ -490,7 +491,7 @@ class WriteMethod:
         """
         if self.is_ready() and not self.devices:
             self.devices = self._get_available_devices()
-        return {id: data[0] for id, data in self.devices.items()}
+        return {did: data[0] for did, data in self.devices.items()}
 
     def is_device_present(self):
         """Returns True if there is one or more devices available via the concrete write method, False otherwise.
@@ -561,6 +562,7 @@ class WriteMethod:
         """
         raise NotImplementedError()
 
+
 class WriteLibUsb(WriteMethod):
     """Write to a device using pyusb and libusb. The device ids consist of the bus number, the device number on that bus
     and the endpoint number.
@@ -613,7 +615,7 @@ class WriteLibUsb(WriteMethod):
                 pass
             try:
                 d.set_configuration()
-            except(WriteLibUsb.usb.core.USBError):
+            except WriteLibUsb.usb.core.USBError:
                 # TODO: use all the nice output in _find_write_method(), somehow.
                 print("No write access to device!")
                 print("Maybe, you have to run this program with administrator rights.")
@@ -622,12 +624,15 @@ class WriteLibUsb(WriteMethod):
                 sys.exit(1)
 
             cfg = d.get_active_configuration()[0, 0]
-            eps = WriteLibUsb.usb.util.find_descriptor(cfg, find_all=True, custom_match = lambda e: \
-                WriteLibUsb.usb.util.endpoint_direction(e.bEndpointAddress) == WriteLibUsb.usb.util.ENDPOINT_OUT)
+            eps = WriteLibUsb.usb.util.find_descriptor(
+                cfg,
+                find_all=True,
+                custom_match=lambda e: WriteLibUsb.usb.util.endpoint_direction(e.bEndpointAddress) == WriteLibUsb.usb.util.ENDPOINT_OUT)
             for ep in eps:
-                id = "%d:%d:%d" % (d.bus, d.address, ep.bEndpointAddress)
-                descr = "%s - %s (bus=%d dev=%d endpoint=%d)" % (d.manufacturer, d.product, d.bus, d.address, ep.bEndpointAddress)
-                devices[id] = (descr, d, ep)
+                did = "%d:%d:%d" % (d.bus, d.address, ep.bEndpointAddress)
+                descr = ("%s - %s (bus=%d dev=%d endpoint=%d)" %
+                         (d.manufacturer, d.product, d.bus, d.address, ep.bEndpointAddress))
+                devices[did] = (descr, d, ep)
         return devices
 
     def is_ready(self):
@@ -649,7 +654,7 @@ class WriteLibUsb(WriteMethod):
 
         try:
             self.dev.set_configuration()
-        except(WriteLibUsb.usb.core.USBError):
+        except WriteLibUsb.usb.core.USBError:
             # TODO: use all the nice output in _find_write_method(), somehow.
             print("No write access to device!")
             print("Maybe, you have to run this program with administrator rights.")
@@ -657,7 +662,7 @@ class WriteLibUsb(WriteMethod):
                 print("* Try with sudo or add a udev rule like described in README.md.")
             sys.exit(1)
 
-        print("Write using %s via libusb" % (self.description))
+        print("Write using %s via libusb" % (self.description,))
         for i in range(int(len(buf) / 64)):
             time.sleep(0.1)
             self.endpoint.write(buf[i * 64:i * 64 + 64])
@@ -708,9 +713,9 @@ class WriteUsbHidApi(WriteMethod):
         device_infos = WriteUsbHidApi.pyhidapi.hid_enumerate(0x0416, 0x5020)
         devices = {}
         for d in device_infos:
-            id = "%s" % (str(d.path.decode('ascii')),)
+            did = "%s" % (str(d.path.decode('ascii')),)
             descr = "%s - %s (if=%d)" % (d.manufacturer_string, d.product_string, d.interface_number)
-            devices[id] = (descr, d.path)
+            devices[did] = (descr, d.path)
         return devices
 
     def is_ready(self):
@@ -724,11 +729,11 @@ class WriteUsbHidApi(WriteMethod):
             return
 
         print("Write using [%s] via hidapi" % (self.description,))
-        for i in range(int(len(buf)/64)):
+        for i in range(int(len(buf) / 64)):
             # sendbuf must contain "report ID" as first byte. "0" does the job here.
             sendbuf = array('B', [0])
             # Then, put the 64 payload bytes into the buffer
-            sendbuf.extend(buf[i*64:i*64+64])
+            sendbuf.extend(buf[i * 64:i * 64 + 64])
             WriteUsbHidApi.pyhidapi.hid_write(self.dev, sendbuf)
 
 
@@ -749,7 +754,7 @@ class LedNameBadge:
             * len(length) should match the designated bitmap data
             * speeds come in as 1..8, but will be decremented to 0..7, here.
             * modes: 0..8
-            * blinks and ants: 0..1 or even False..True,
+            * blinks and ants: 0..1 or even False...True,
             * brightness, if given, is any number, but it'll be limited to 25, 50, 75, 100 (percent), here
             * date, if given, is a datetime object. It will be written in the header, but is not to be seen on the
               devices screen.
@@ -760,7 +765,6 @@ class LedNameBadge:
             raise TypeError("Please give a list or tuple with at least one number: " + str(lengths))
         if lengths_sum > (8192 - len(LedNameBadge._protocol_header_template)) / 11 + 1:
             raise ValueError("The given lengths seem to be far too high: " + str(lengths))
-
 
         ants = LedNameBadge._prepare_iterable(ants, 0, 1)
         blinks = LedNameBadge._prepare_iterable(blinks, 0, 1)
@@ -812,7 +816,7 @@ class LedNameBadge:
             raise TypeError("Please give a list or tuple with at least one number: " + str(iterable))
 
     @staticmethod
-    def write(buf, method = 'auto', device_id = 'auto'):
+    def write(buf, method='auto', device_id='auto'):
         """Write the given buffer to the device.
             It has to begin with a protocol header as provided by header() and followed by the bitmap data.
             In short: the bitmap data is organized in bytes with 8 horizontal pixels per byte and 11 resp. 12
@@ -947,14 +951,14 @@ class LedNameBadge:
     def _print_available_devices(method_obj):
         if method_obj.is_device_present():
             print("Known device ids with method '%s' are:" % (method_obj.get_name(),))
-            for id, descr in sorted(method_obj.get_available_devices().items()):
-                LedNameBadge.print_one_device(id, descr)
+            for did, descr in sorted(method_obj.get_available_devices().items()):
+                LedNameBadge.print_one_device(did, descr)
         else:
             print("No devices with method '%s' found." % (method_obj.get_name(),))
 
     @staticmethod
-    def print_one_device(id, descr):
-        print("  '%s': %s" % (id, descr))
+    def print_one_device(did, descr):
+        print("  '%s': %s" % (did, descr))
 
     @staticmethod
     def _print_libusb_install_hints(name):
@@ -985,7 +989,8 @@ class LedNameBadge:
             print("  (or similar, suitable for your distro; the exact command and package name might be different):")
             print("  $ sudo apt-get install libhidapi-hidraw0")
             print("* If the library is still not found by the module. Try the following")
-            print("  (or similar, suitable for your distro; the exact command, library name and paths might be different):")
+            print(
+                "  (or similar, suitable for your distro; the exact command, library name and paths might be different):")
             print("  $ sudo ln -s /usr/lib/x86_64-linux-gnu/libhidapi-hidraw.so.0  /usr/local/lib/")
 
     @staticmethod
@@ -997,7 +1002,7 @@ class LedNameBadge:
             print("  (You may need prepend 'sudo' for system wide module installation.)")
             print("  (You may also use your package manager. Try the following, e.g for %s)" % (pip_package,))
             print("  (or similar, suitable for your distro; the exact command and package name might be different):")
-            print("  $ sudo apt install %s" % (pm_package))
+            print("  $ sudo apt install %s" % (pm_package,))
 
 
 def main():
@@ -1006,19 +1011,34 @@ def main():
                                      epilog='Example combining image and text:\n sudo %s "I:HEART2:you"' % sys.argv[0])
     parser.add_argument('-t', '--type', default='11x44',
                         help="Type of display: supported values are 12x48 or (default) 11x44. Rename the program to led-badge-12x48, to switch the default.")
-    parser.add_argument('-H', '--hid', default='0', help="Deprecated, only for backwards compatibility, please use -M! Set to 1 to ensure connect via HID API, program will then not fallback to usb.core library.")
-    parser.add_argument('-M', '--method', default='auto', help="Force using the given write method. Use one of 'auto', 'list' or whatever list is printing.")
-    parser.add_argument('-D', '--device-id', default='auto', help="Force using the given device id, if ambiguous. Usue one of 'auto', 'list' or whatever list is printing.")
+    parser.add_argument('-H',
+                        '--hid',
+                        default='0',
+                        help="Deprecated, only for backwards compatibility, please use -M! Set to 1 to ensure connect via HID API, program will then not fallback to usb.core library.")
+    parser.add_argument('-M',
+                        '--method',
+                        default='auto',
+                        help="Force using the given write method. Use one of 'auto', 'list' or whatever list is printing.")
+    parser.add_argument('-D',
+                        '--device-id',
+                        default='auto',
+                        help="Force using the given device id, if ambiguous. Use one of 'auto', 'list' or whatever list is printing.")
     parser.add_argument('-s', '--speed', default='4', help="Scroll speed (Range 1..8). Up to 8 comma-separated values.")
     parser.add_argument('-B', '--brightness', default='100',
                         help="Brightness for the display in percent: 25, 50, 75, or 100.")
     parser.add_argument('-m', '--mode', default='0',
                         help="Up to 8 mode values: Scroll-left(0) -right(1) -up(2) -down(3); still-centered(4); animation(5); drop-down(6); curtain(7); laser(8); See '--mode-help' for more details.")
     parser.add_argument('-b', '--blink', default='0', help="1: blinking, 0: normal. Up to 8 comma-separated values.")
-    parser.add_argument('-a', '--ants', default='0', help="1: animated border, 0: normal. Up to 8 comma-separated values.")
+    parser.add_argument('-a',
+                        '--ants',
+                        default='0',
+                        help="1: animated border, 0: normal. Up to 8 comma-separated values.")
     parser.add_argument('-p', '--preload', metavar='FILE', action='append',
                         help=argparse.SUPPRESS)  # "Load bitmap images. Use ^A, ^B, ^C, ... in text messages to make them visible. Deprecated, embed within ':' instead")
-    parser.add_argument('-l', '--list-names', action='version', help="list named icons to be embedded in messages and exit.",
+    parser.add_argument('-l',
+                        '--list-names',
+                        action='version',
+                        help="list named icons to be embedded in messages and exit.",
                         version=':' + ':  :'.join(SimpleTextAndIcons._get_named_bitmaps_keys()) + ':  ::  or e.g. :path/to/some_icon.png:')
     parser.add_argument('message', metavar='MESSAGE', nargs='+',
                         help="Up to 8 message texts with embedded builtin icons or loaded images within colons(:) -- See -l for a list of builtins.")

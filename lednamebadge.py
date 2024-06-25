@@ -16,22 +16,43 @@
 #
 # Windows install:
 # ----------------
-##    https://sourceforge.net/projects/libusb-win32/ ->
-##      -> https://kent.dl.sourceforge.net/project/libusb-win32/libusb-win32-releases/1.2.6.0/libusb-win32-bin-1.2.6.0.zip
-##      cd libusb-win32-bin-1.2.6.0\bin
-## download inf-wizard.exe to your desktop. Right click 'Run as Administrator'
-#       -> Click 0x0416 0x5020 LS32 Custm HID
-#       -> Next -> Next -> Dokumente LS32_Sustm_HID.inf -> Save
-#       -> Install Now... -> Driver Install Complete -> OK
-# download python from python.org
-#      [x] install Launcher for all Users
-#      [x] Add Python 3.7 to PATH
-#       -> Click the 'Install Now ...' text message.
-#       -> Optionally click on the 'Disable path length limit' text message. This is always a good thing to do.
-# run cmd.exe as Administrator, enter:
-#    pip install pyusb
-#    pip install pillow
+# For Windows, we need to set up the libusb API for the LED badge device.
+# The way described here, uses [libusb-win32](https://github.com/mcuee/libusb-win32/wiki)
+# in a quite low level way and in a quite old version:
 #
+# - Please use version 1.2.6.0 of 'usblib-win32`. It's still available on the
+#   [old project repo on SourceForge](https://sourceforge.net/projects/libusb-win32/files/libusb-win32-releases/1.2.6.0/)
+# - Then
+#     - Extract the downloaded zip file and go to the directory `libusb-win32-bin-1.2.6.0\bin`
+#     - Right click on `inf-wizard.exe` and `Run as Administrator`
+#     - `Next` -> Select `0x0416 0x5020 LS32 Custm HID` (or similar with the same IDs)
+#     - `Next` -> `Next` -> Save as dialog `LS32_Sustm_HID.inf` -> `Save` (just to proceed, we don't need that file)
+#     - `Install Now...` -> Driver Install Complete -> `OK`
+#
+# There are other - meanwhile recommended, but untested here - ways to install and setup
+# newer versions of `libus-win32`: use
+# [Zadig](https://zadig.akeo.ie/) (it is also available from the old libusb-win32 repo on
+# [GitHub repo](https://github.com/mcuee/libusb-win32/releases) of newer releases)
+# or [libusbK](https://libusbk.sourceforge.net/UsbK3/index.html)
+#
+# Of course, Python is needed:
+#
+# - Download latest python from [python.org](https://www.python.org/downloads/),
+# or specific versions from [here](https://www.python.org/downloads/windows/)
+#     - Checkmark the following options
+#         - `[x]` install Launcher for all Users
+#         - `[x]` Add Python X.Y to PATH
+#     - Click the `Install Now ...` text message.
+#     - Optionally click on the 'Disable path length limit' text message. This is always a good thing to do.
+#
+# Install needed the Python packages. On some systems (esp. those with Python 2
+# *and* 3 installed), you have to address Python 3 explicitly by using the
+# command `pip3` instead of `pip`.
+#
+# - Run cmd.exe as Administrator, enter:
+#
+#         pip install pyusb
+#         pip install pillow
 
 #
 # v0.1, 2019-03-05, jw  initial draught. HID code is much simpler than expected.
@@ -61,8 +82,9 @@
 #       somehow, but it is acceptable, as we do not need to save every processor cycle, here :)
 #     * Have fun!
 # v0.14, 2024-06-02, bs extending write methods.
-#     * Preparation for further write methods, like bluetooth.
-#     * Automatic or manual device and endpoint selection, See -M and -D (substituting -H)
+#     * Preparation for further or updated write methods, like bluetooth.
+#     * Automatic or manual write method and device selection, See -M and -D (substituting -H) resp.
+#       get_available_methods() and get_available_device_ids().
 
 
 import argparse
@@ -411,19 +433,37 @@ class SimpleTextAndIcons:
 
 
 class WriteMethod:
+    """Base class for a write method. That is a way to communicate with a device. Think of using different access
+    libraries or interfaces for communication. Basically it implements the common parts of the functionalities
+    'device detection' and 'write data' and defines te interfaces to the user and the concrete write method class.
+    """
     def __init__(self):
+        """Call it from your concrete class in your __init__ method with!
+        """
         self.devices = {}
 
     def __del__(self):
         self.close()
 
     def get_name(self):
+        """Returns the name of the write method.
+        This method is to be implemented in your concrete class. It should just return a short and unique name.
+        """
         raise NotImplementedError()
 
     def get_description(self):
+        """Returns a description of the write method.
+        This method is to be implemented in your concrete class. It should just return a short description
+        of how the write method communicates with the device (think of libraries and interfaces).
+        """
         raise NotImplementedError()
 
     def open(self, device_id):
+        """Opens the communication channel to the device, similar to open a file. The device id is one of the ids
+        returned by get_available_devices() or 'auto', which selects just the first device in that dict.
+        It is the common part of the opening process. The concrete open is done in _open() and is to be implemented
+        individually.
+        """
         if self.is_ready() and self.is_device_present():
             actual_device_id = None
             if device_id == 'auto':
@@ -437,50 +477,94 @@ class WriteMethod:
         return False
 
     def close(self):
+        """Close the communication channel to the device, similar to closing a file.
+        This method is to be implemented in your concrete class. It should close and free all handles and resources.
+        """
         raise NotImplementedError()
 
     def get_available_devices(self):
+        """Get all devices available via the concrete write method. It returns a dict with the device ids as keys
+        and the device descriptions as values. These device ids are used with 'open()' to specify the wanted device.
+        It the common part of this process. The concrete part is to be implemented in _get_available_devices()
+        individually.
+        """
         if self.is_ready() and not self.devices:
             self.devices = self._get_available_devices()
         return {id: data[0] for id, data in self.devices.items()}
 
     def is_device_present(self):
+        """Returns True if there is one or more devices available via the concrete write method, False otherwise.
+        """
         self.get_available_devices()
         return self.devices and len(self.devices) > 0
 
     def _open(self, device_id):
+        """The concrete open action. This method is to be implemented in your concrete class. It shall open
+        the communication channel to the device with the specified id, which is one of the ids returned by
+        _get_available_devices(). It shall return True, if successful, otherwise False. The special id 'auto'
+        is handled in open(). So, this method is called only with device ids from the dict returned by
+        _get_available_devices().
+        """
         raise NotImplementedError()
 
     def _get_available_devices(self):
+        """The concrete get-the-list action. This method is to be implemented in your concrete class. It shall
+        Return a dict with one entry per available device. The key of an entry is the device id, like it will be
+        used in open() / _open(). The value af an entry is a tuple with any data according to the needs of your
+        write method. The only defined element is the first one, which shall be a description of the individual
+        device (e.g. manufacturer or bus number / address). E.g. { '1:5': ('Nametag 5 on bus 1', any, data)}
+        """
         raise NotImplementedError()
 
     def is_ready(self):
+        """Returns True, if the concrete write method is basically ready for operation, otherwise False.
+        This method is to be implemented in your concrete class. Basically, if the import instruction for the
+        needed Python modules and potentially a library / module initialization was successful, it shall return True.
+        This method does not make any statement about concrete devices or device availability.
+        """
         raise NotImplementedError()
 
     def has_device(self):
+        """Returns True, if there is at least one device available with the concrete write method, otherwise False.
+        This method is to be implemented in your concrete class.
+        """
         raise NotImplementedError()
 
     def write(self, buf):
+        """Call this to write data to the opened device.
+        The concrete write action is to be implemented in _write()."""
         self.add_padding(buf, 64)
         self.check_length(buf, 8192)
         self._write(buf)
 
     @staticmethod
-    def add_padding(buf, blocksize):
-        need_padding = len(buf) % blocksize
+    def add_padding(buf, block_size):
+        """The given data array will be extended with zeros according to the given block size. SO, afterwards the
+        length of the array is a multiple of block_size.
+        """
+        need_padding = len(buf) % block_size
         if need_padding:
-            buf.extend((0,) * (blocksize - need_padding))
+            buf.extend((0,) * (block_size - need_padding))
 
     @staticmethod
-    def check_length(buf, maxsize):
-        if len(buf) > maxsize:
-            print("Writing more than %d bytes damages the display! Nothing written." % (maxsize,))
+    def check_length(buf, max_size):
+        """Just checks the length of the given data array and abort the program execution if it exceeds max_size.
+        """
+        if len(buf) > max_size:
+            print("Writing more than %d bytes damages the display! Nothing written." % (max_size,))
             sys.exit(1)
 
     def _write(self, buf):
+        """Write the given data array to the opened device.
+        This method is to be implemented in your concrete class. It shall write the given data array to the opened
+        device.
+        """
         raise NotImplementedError()
 
 class WriteLibUsb(WriteMethod):
+    """Write to a device using pyusb and libusb. The device ids consist of the bus number, the device number on that bus
+    and the endpoint number.
+    """
     _module_loaded = False
     try:
         import usb.core
@@ -580,6 +664,9 @@ class WriteLibUsb(WriteMethod):
 
 
 class WriteUsbHidApi(WriteMethod):
+    """Write to a device connected to USB using pyhidapi and libhidapi. The device ids are simply the device paths as
+    used by libhidapi.
+    """
     _module_loaded = False
     try:
         import pyhidapi
@@ -752,6 +839,10 @@ class LedNameBadge:
 
     @staticmethod
     def _find_write_method(method, device_id):
+        """Here we try to concentrate all special cases, decisions and messages around the manual or automatic
+        selection of write methods and device. This way it is a bit easier to extend or modify the different
+        working run time environments (think of operating system, python version, installed libraries and python
+        modules, ands so on.)"""
         auto_order_methods = LedNameBadge.get_auto_order_method_list()
         hidapi = [m for m in auto_order_methods if m.get_name() == 'hidapi'][0]
         libusb = [m for m in auto_order_methods if m.get_name() == 'libusb'][0]

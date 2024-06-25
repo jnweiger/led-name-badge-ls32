@@ -98,7 +98,8 @@ in a quite low level way and in a quite old version:
 - Please use version 1.2.6.0 of 'usblib-win32`. It's still available on the
   [old project repo on SourceForge](https://sourceforge.net/projects/libusb-win32/files/libusb-win32-releases/1.2.6.0/)
 - Then
-    - Extract `bin/inf-wizard.exe` from the downloaded zip file. Right click and `Run as Administrator`
+    - Extract the downloaded zip file and go to the directory `libusb-win32-bin-1.2.6.0\bin`
+    - Right click on `inf-wizard.exe` and `Run as Administrator`
     - `Next` -> Select `0x0416 0x5020 LS32 Custm HID` (or similar with the same IDs)
     - `Next` -> `Next` -> Save as dialog `LS32_Sustm_HID.inf` -> `Save` (just to proceed, we don't need that file)
     - `Install Now...` -> Driver Install Complete -> `OK`
@@ -117,6 +118,7 @@ or specific versions from [here](https://www.python.org/downloads/windows/)
         - `[x]` install Launcher for all Users
         - `[x]` Add Python X.Y to PATH
     - Click the `Install Now ...` text message.
+    - Optionally click on the 'Disable path length limit' text message. This is always a good thing to do.
 
 Install needed the Python packages. On some systems (esp. those with Python 2
 *and* 3 installed), you have to address Python 3 explicitly by using the

@@ -817,11 +817,15 @@ class LedNameBadge:
 
     @staticmethod
     def write(buf, method='auto', device_id='auto'):
-        """Write the given buffer to the device.
+        """Write the given buffer to the given device.
             It has to begin with a protocol header as provided by header() and followed by the bitmap data.
             In short: the bitmap data is organized in bytes with 8 horizontal pixels per byte and 11 resp. 12
             bytes per (8 pixels wide) byte-column. Then just put one byte-column after the other and one bitmap
             after the other.
+            The two optional parameters specify the write method and device, which shall be programmed. See
+            get_available_methods() and get_available_device_ids(). There are two special values each: 'list'
+            will print the implemented / available write methods resp. the available devices, 'auto' (default) will
+            choose an appropriate write method resp. the first device found.
         """
         write_method = LedNameBadge._find_write_method(method, device_id)
         if write_method:
@@ -830,12 +834,21 @@ class LedNameBadge:
 
     @staticmethod
     def get_available_methods():
-        auto_order_methods = LedNameBadge.get_auto_order_method_list()
-        return {m.get_name(): m.is_ready() for m in auto_order_methods}
+        """
+        Returns the implemented / available write methods as a dict. Each entry has the method name as the key and a
+        tuple as the value with the method description and a boolean indicating the readiness of that write method.
+        Basically it is ready if all necessary libraries and Python modules could be loaded. The method name can be
+        used as a parameter value for write().
+        """
+        auto_order_methods = LedNameBadge._get_auto_order_method_list()
+        return {m.get_name(): (m.get_description(), m.is_ready()) for m in auto_order_methods}
 
     @staticmethod
     def get_available_device_ids(method):
-        auto_order_methods = LedNameBadge.get_auto_order_method_list()
+        """Returns all devices available via the given write method as a dict. Each entry has the device id as the key
+        and the device description as the value. The device id can be used as a parameter value for write().
+        """
+        auto_order_methods = LedNameBadge._get_auto_order_method_list()
         wanted_method = [m for m in auto_order_methods if m.get_name() == method]
         if wanted_method:
             return wanted_method[0].get_available_devices()
@@ -847,7 +860,7 @@ class LedNameBadge:
         selection of write methods and device. This way it is a bit easier to extend or modify the different
         working run time environments (think of operating system, python version, installed libraries and python
         modules, ands so on.)"""
-        auto_order_methods = LedNameBadge.get_auto_order_method_list()
+        auto_order_methods = LedNameBadge._get_auto_order_method_list()
         hidapi = [m for m in auto_order_methods if m.get_name() == 'hidapi'][0]
         libusb = [m for m in auto_order_methods if m.get_name() == 'libusb'][0]
 
@@ -933,7 +946,7 @@ class LedNameBadge:
         sys.exit(1)
 
     @staticmethod
-    def get_auto_order_method_list():
+    def _get_auto_order_method_list():
         return [WriteUsbHidApi(), WriteLibUsb()]
 
     @staticmethod
@@ -952,12 +965,12 @@ class LedNameBadge:
         if method_obj.is_device_present():
             print("Known device ids with method '%s' are:" % (method_obj.get_name(),))
             for did, descr in sorted(method_obj.get_available_devices().items()):
-                LedNameBadge.print_one_device(did, descr)
+                LedNameBadge._print_one_device(did, descr)
         else:
             print("No devices with method '%s' found." % (method_obj.get_name(),))
 
     @staticmethod
-    def print_one_device(did, descr):
+    def _print_one_device(did, descr):
         print("  '%s': %s" % (did, descr))
 
     @staticmethod

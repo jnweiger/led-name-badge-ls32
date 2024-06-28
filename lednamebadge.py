@@ -903,17 +903,19 @@ class LedNameBadge:
                 sys.exit(1)
 
         if method == hidapi.get_name():
-            if sys.platform.startswith('win'):
-                print("For Windows, please use method '%s' or 'auto'." % (libusb.get_name(),))
-                print("Or help us implementing support for Windows.")
-                sys.exit(1)
-            elif sys.version_info[0] < 3:
+            if sys.version_info[0] < 3:
                 print("Please use method '%s' or 'auto' with python-2.x" % (libusb.get_name(),))
                 print("because of https://github.com/jnweiger/led-badge-ls32/issues/9")
                 sys.exit(1)
             elif not hidapi.is_ready():
                 LedNameBadge._print_hidapi_install_hints(hidapi.get_name())
                 sys.exit(1)
+
+            if sys.platform.startswith('win') and hidapi.is_ready():
+                print("Method '%s' is not tested under Windows. If not working, please use '%s' or 'auto'" % (
+                    hidapi.get_name(), libusb.get_name()))
+                print("Or help us implementing support for Windows.")
+                # But it is not forbidden
 
         first_method_found = None
         for m in auto_order_methods:

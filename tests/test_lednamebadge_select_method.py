@@ -127,7 +127,12 @@ class Test(abstract_witre_method_test.AbstractWriteMethodTest):
     def test_windows_negative(self):
         method, output = self.call_find(True, False, True, 'hidapi', 'auto')
         self.assertNotIn('device initialized', output)
-        self.assertIn('please use method', output)
+        self.assertIn('is not possible to be used', output)
+        self.assertIsNone(method)
+
+        method, output = self.call_find(True, True, False, 'hidapi', 'auto')
+        self.assertNotIn('device initialized', output)
+        self.assertIn('If not working, please use', output)
         self.assertIsNone(method)
 
     @patch('sys.platform', new='darwin')

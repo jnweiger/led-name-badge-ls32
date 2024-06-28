@@ -596,9 +596,9 @@ class WriteLibUsb(WriteMethod):
         return True
 
     def close(self):
-        for k, d in self.devices.items():
-            d[1].reset()
-            WriteLibUsb.usb.util.dispose_resources(d[1])
+        if self.dev:
+            self.dev.reset()
+            WriteLibUsb.usb.util.dispose_resources(self.dev)
         self.description = None
         self.dev = None
         self.endpoint = None
@@ -617,10 +617,8 @@ class WriteLibUsb(WriteMethod):
                 d.set_configuration()
             except WriteLibUsb.usb.core.USBError:
                 # TODO: use all the nice output in _find_write_method(), somehow.
-                print("No write access to device!")
-                print("Maybe, you have to run this program with administrator rights.")
-                if sys.platform.startswith('linux'):
-                    print("* Try with sudo or add a udev rule like described in README.md.")
+                print("No read access to device list!")
+                LedNameBadge._print_sudo_hints()
                 sys.exit(1)
 
             cfg = d.get_active_configuration()[0, 0]
@@ -657,9 +655,7 @@ class WriteLibUsb(WriteMethod):
         except WriteLibUsb.usb.core.USBError:
             # TODO: use all the nice output in _find_write_method(), somehow.
             print("No write access to device!")
-            print("Maybe, you have to run this program with administrator rights.")
-            if sys.platform.startswith('linux'):
-                print("* Try with sudo or add a udev rule like described in README.md.")
+            LedNameBadge._print_sudo_hints()
             sys.exit(1)
 
         print("Write using %s via libusb" % (self.description,))
@@ -941,8 +937,8 @@ class LedNameBadge:
         if device_id != 'auto':
             print("* Have you given the right device_id?")
             print("  Find the available device ids with option -D list")
-        print("* If it is connected and still do not work, maybe you have to run")
-        print("  this program as root.")
+        print("* If it is connected and still do not work:")
+        LedNameBadge._print_sudo_hints()
         sys.exit(1)
 
     @staticmethod
@@ -1016,6 +1012,16 @@ class LedNameBadge:
             print("  (You may also use your package manager. Try the following, e.g for %s)" % (pip_package,))
             print("  (or similar, suitable for your distro; the exact command and package name might be different):")
             print("  $ sudo apt install %s" % (pm_package,))
+
+    @staticmethod
+    def _print_sudo_hints():
+        print("Maybe, you have to run this program with administrator rights.")
+        if sys.platform.startswith('win'):
+            print("* Open start menu, type 'cmd', click 'Run as Administrator'")
+        if sys.platform.startswith('linux'):
+            print("* If Try with sudo or")
+            print("* If you run the program from a virtual env, you may need to open a root shell beforehand.")
+            print("* Best: add a udev rule like described in README.md.")
 
 
 def main():

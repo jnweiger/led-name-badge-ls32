@@ -1,10 +1,10 @@
 import sys
 from array import array
 
-import abstract_witre_method_test
+import abstract_write_method_test
 
 
-class Test(abstract_witre_method_test.AbstractWriteMethodTest):
+class Test(abstract_write_method_test.AbstractWriteMethodTest):
     def test_get_methods(self):
         methods, output = self.call_info_methods()
         self.assertDictEqual({

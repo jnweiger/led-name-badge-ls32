@@ -1,9 +1,9 @@
 from unittest.mock import patch
 
-import abstract_witre_method_test
+import abstract_write_method_test
 
 
-class Test(abstract_witre_method_test.AbstractWriteMethodTest):
+class Test(abstract_write_method_test.AbstractWriteMethodTest):
     @patch('sys.platform', new='linux')
     def test_list(self):
         method, output = self.call_find(True, True, True, 'list', 'auto')

@@ -429,7 +429,7 @@ Run `python run_tests.py` from the `tests` directory.
 ## Related References (for USB-Serial devices)
 
 * https://github.com/Caerbannog/led-mini-board
-* http://zunkworks.com/projects/programmablelednamebadges/
+* http://zunkworks.com/projects/programmablelednamebadges/ (Offline since 2019. As of 07-2024, it is still available on https://web.archive.org)
 * https://github.com/DirkReiners/LEDBadgeProgrammer
 * https://bitbucket.org/bartj/led/src
 * http://www.daveakerman.com/?p=1440

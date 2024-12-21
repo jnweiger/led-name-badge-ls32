@@ -80,14 +80,16 @@ library to the needed place, e.g.
 
 ### Required dependencies on Mac Systems
 
-On some systems (esp. those with Python 2 *and* 3 installed), you have to
-address Python 3 explicitly by using the command `pip3` instead of `pip`.
-
-    sudo easy_install pip
-    pip install pyhidapi
-    pip install pillow
-    ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" < /dev/null 2> /dev/null
+    pip3 install pyhidapi
+    pip3 install pillow
+    
+    # Install Homebrew
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    
     brew install hidapi
+    
+    # Link the hidapi libraries into somewhere where Python can find them
+    find /opt/homebrew/Cellar/hidapi -name "*.dylib" -exec sudo ln -s {} /usr/local/lib/ \;
 
 ### Required dependencies on Windows 7/10
 

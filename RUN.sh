@@ -1,1 +1,1 @@
-sudo python3 ./led-badge-11x44.py -m 0,0,0,4,4,4 -p gfx/heart.png -p gfx/fablab_logo_16x11.png -p gfx/owncloud_logo_24x11.png Jürgen "Imyfablab" "I " gfx/fablabnbg_logo_44x11.png gfx/falafue_logo_44x11.png ""
+sudo python3 ./led-badge-11x44.py -m 0,0,0,4,4,4,0 -p gfx/heart.png -p gfx/fablab_logo_16x11.png -p gfx/owncloud_logo_24x11.png Jürgen "Imyfablab" "I " gfx/fablabnbg_logo_44x11.png gfx/falafue_logo_44x11.png "" "你好 ひらカタ漢字　안녕하세요"

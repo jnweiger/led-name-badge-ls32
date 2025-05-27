@@ -88,15 +88,21 @@
 
 
 import argparse
+import math
 import os
 import re
 import sys
 import time
 from array import array
 from datetime import datetime
+from pathlib import Path
 
-
-__version = "0.14"
+try:
+    from bdfparser import Font
+except ImportError:
+    Font = None
+    print("bdfparser is not installed which is necessary to load .bdf font files")
+__version = "0.15"
 
 
 class SimpleTextAndIcons:
@@ -280,7 +286,7 @@ class SimpleTextAndIcons:
             0b01111110,
             0b00111100,
             0b00000000
-        )), 1, '\x1e'),
+        )), 8, '\x1e'),
         'happy':     (array('B', (
             0b00000000,  # 0x00
             0b00000000,  # 0x00
@@ -293,26 +299,26 @@ class SimpleTextAndIcons:
             0b01000010,  # 0x42
             0b00111100,  # 0x3c
             0b00000000  # 0x00
-        )), 1, '\x1d'),
+        )), 8, '\x1d'),
         'happy2':    (array('B', (0x00, 0x08, 0x14, 0x08, 0x01, 0x00, 0x00, 0x61, 0x30, 0x1c, 0x07,
-                                  0x00, 0x20, 0x50, 0x20, 0x00, 0x80, 0x80, 0x86, 0x0c, 0x38, 0xe0)), 2, '\x1c'),
-        'heart':     (array('B', (0x00, 0x00, 0x6c, 0x92, 0x82, 0x82, 0x44, 0x28, 0x10, 0x00, 0x00)), 1, '\x1b'),
-        'HEART':     (array('B', (0x00, 0x00, 0x6c, 0xfe, 0xfe, 0xfe, 0x7c, 0x38, 0x10, 0x00, 0x00)), 1, '\x1a'),
+                                  0x00, 0x20, 0x50, 0x20, 0x00, 0x80, 0x80, 0x86, 0x0c, 0x38, 0xe0)), 16, '\x1c'),
+        'heart':     (array('B', (0x00, 0x00, 0x6c, 0x92, 0x82, 0x82, 0x44, 0x28, 0x10, 0x00, 0x00)), 8, '\x1b'),
+        'HEART':     (array('B', (0x00, 0x00, 0x6c, 0xfe, 0xfe, 0xfe, 0x7c, 0x38, 0x10, 0x00, 0x00)), 8, '\x1a'),
         'heart2':    (array('B', (0x00, 0x0c, 0x12, 0x21, 0x20, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01,
-                                  0x00, 0x60, 0x90, 0x08, 0x08, 0x08, 0x10, 0x20, 0x40, 0x80, 0x00)), 2, '\x19'),
+                                  0x00, 0x60, 0x90, 0x08, 0x08, 0x08, 0x10, 0x20, 0x40, 0x80, 0x00)), 16, '\x19'),
         'HEART2':    (array('B', (0x00, 0x0c, 0x1e, 0x3f, 0x3f, 0x3f, 0x1f, 0x0f, 0x07, 0x03, 0x01,
-                                  0x00, 0x60, 0xf0, 0xf8, 0xf8, 0xf8, 0xf0, 0xe0, 0xc0, 0x80, 0x00)), 2, '\x18'),
+                                  0x00, 0x60, 0xf0, 0xf8, 0xf8, 0xf8, 0xf0, 0xe0, 0xc0, 0x80, 0x00)), 16, '\x18'),
         'fablab':    (array('B', (0x07, 0x0e, 0x1b, 0x03, 0x21, 0x2c, 0x2e, 0x26, 0x14, 0x1c, 0x06,
-                                  0x80, 0x60, 0x30, 0x80, 0x88, 0x38, 0xe8, 0xc8, 0x10, 0x30, 0xc0)), 2, '\x17'),
+                                  0x80, 0x60, 0x30, 0x80, 0x88, 0x38, 0xe8, 0xc8, 0x10, 0x30, 0xc0)), 16, '\x17'),
         'bicycle':   (array('B', (0x01, 0x02, 0x00, 0x01, 0x07, 0x09, 0x12, 0x12, 0x10, 0x08, 0x07,
                                   0x00, 0x87, 0x81, 0x5f, 0x22, 0x94, 0x49, 0x5f, 0x49, 0x80, 0x00,
-                                  0x00, 0x80, 0x00, 0x80, 0x70, 0xc8, 0x24, 0xe4, 0x04, 0x88, 0x70)), 3, '\x16'),
+                                  0x00, 0x80, 0x00, 0x80, 0x70, 0xc8, 0x24, 0xe4, 0x04, 0x88, 0x70)), 24, '\x16'),
         'bicycle_r': (array('B', (0x00, 0x00, 0x00, 0x00, 0x07, 0x09, 0x12, 0x13, 0x10, 0x08, 0x07,
                                   0x00, 0xf0, 0x40, 0xfd, 0x22, 0x94, 0x49, 0xfd, 0x49, 0x80, 0x00,
-                                  0x40, 0xa0, 0x80, 0x40, 0x70, 0xc8, 0x24, 0x24, 0x04, 0x88, 0x70)), 3, '\x15'),
+                                  0x40, 0xa0, 0x80, 0x40, 0x70, 0xc8, 0x24, 0x24, 0x04, 0x88, 0x70)), 24, '\x15'),
         'owncloud':  (array('B', (0x00, 0x01, 0x02, 0x03, 0x06, 0x0c, 0x1a, 0x13, 0x11, 0x19, 0x0f,
                                   0x78, 0xcc, 0x87, 0xfc, 0x42, 0x81, 0x81, 0x81, 0x81, 0x43, 0xbd,
-                                  0x00, 0x00, 0x00, 0x80, 0x80, 0xe0, 0x30, 0x10, 0x28, 0x28, 0xd0)), 3, '\x14'),
+                                  0x00, 0x00, 0x00, 0x80, 0x80, 0xe0, 0x30, 0x10, 0x28, 0x28, 0xd0)), 24, '\x14'),
     }
 
     bitmap_builtin = {}
@@ -322,6 +328,10 @@ class SimpleTextAndIcons:
     def __init__(self):
         self.bitmap_preloaded = [([], 0)]
         self.bitmaps_preloaded_unused = False
+        self.kanji_fonts = []
+        if Font:  # check if bdfparser is loaded
+            for path in Path("./fonts/").glob("*.bdf"):
+                self.kanji_fonts.append(Font(str(path)))
 
     def add_preload_img(self, filename):
         """Still used by main, but deprecated. PLease use ":"-notation for bitmap() / bitmap_text()"""
@@ -347,9 +357,47 @@ class SimpleTextAndIcons:
 
             self.bitmaps_preloaded_unused = False
             return self.bitmap_preloaded[ord(ch)]
+        if ch not in SimpleTextAndIcons.char_offsets and self.kanji_fonts:
+            # Use BDF font
+            glyph = None
+            for fonts in self.kanji_fonts:
+                if ord(ch) in fonts.glyphs:
+                    glyph = fonts.glyph(ch)
+                    break
+            if not glyph:
+                print('Warning: Unknown character %s' % ch)
+                return self.bitmap_char("?")
+            img = glyph.draw(0)
+            img_cropped = img.clone().crop(glyph.meta["dwx0"], 11, 0, 0) # add space based on advance property
 
+            # Get raw bitmap data row-by-row
+            # Each row is a list of 0s and 1s
+            bitmap_rows = img_cropped.bindata
+            width_chars = img_cropped.width()
+            result = []
+
+            # split wider chars to multiple bytes
+            for i in range(math.ceil(width_chars / 8)):
+                subchar = []
+                for row in bitmap_rows:
+                    byte = 0
+                    chars = row[i * 8:(1 + i) * 8]
+                    for bit in chars:  # take only 8 pixels per row
+                        byte = (byte << 1) | int(bit)
+                    byte <<= (8 - len(chars))  # pad remaining bits if row is short
+                    assert byte <= 255
+                    subchar.append(byte)
+
+                # pad vertically if needed
+                for _ in range(11 - len(bitmap_rows)):
+                    result.insert(0, 0)
+                result.extend(subchar)
+            return tuple(result), width_chars
+        if ch not in SimpleTextAndIcons.char_offsets:
+            print('Warning: Unknown character %s' % ch)
+            return self.bitmap_char("?")
         o = SimpleTextAndIcons.char_offsets[ch]
-        return SimpleTextAndIcons.font_11x44[o:o + 11], 1
+        return SimpleTextAndIcons.font_11x44[o:o + 11], 8
 
     def bitmap_text(self, text):
         """Returns a tuple of (buffer, length_in_byte_columns_aka_chars)
@@ -374,19 +422,19 @@ class SimpleTextAndIcons:
 
         text = re.sub(r':([^:]*):', replace_symbolic, text)
         buf = array('B')
-        cols = 0
+        cols = []
         for c in text:
             (b, n) = self.bitmap_char(c)
             buf.extend(b)
-            cols += n
+            cols.append(n)
         return buf, cols
 
     @staticmethod
     def bitmap_img(file):
-        """Returns a tuple of (buffer, length_in_byte_columns) representing the given image file.
+        """Returns a tuple of (buffer, width_in_bits_columns) representing the given image file.
             It has to be an 8-bit grayscale image or a color image with 8 bit per channel. Color pixels are converted to
             grayscale by arithmetic mean. Threshold for an active led is then > 127.
-            If the width is not a multiple on 8 it will be padded with empty pixel-columns.
+            If the width is not a multiple of 8 it will be padded with empty pixel-columns.
         """
         try:
             from PIL import Image
@@ -401,6 +449,7 @@ class SimpleTextAndIcons:
         if im.height != 11:
             sys.exit("%s: image height must be 11px. Seen %d" % (file, im.height))
         buf = array('B')
+        width = im.width  # width in bits/columns
         cols = int((im.width + 7) / 8)
         for col in range(cols):
             for row in range(11):  # [0..10]
@@ -421,14 +470,15 @@ class SimpleTextAndIcons:
                         byte_val += bit_val
                 buf.append(byte_val)
         im.close()
-        return buf, cols
+        return buf, width
 
     def bitmap(self, arg):
         """If arg is a valid and existing path name, we load it as an image.
             Otherwise, we take it as a string (with ":"-notation, see bitmap_text()).
         """
         if os.path.exists(arg):
-            return SimpleTextAndIcons.bitmap_img(arg)
+            buf, width = SimpleTextAndIcons.bitmap_img(arg)
+            return buf, [width]
         return self.bitmap_text(arg)
 
 
@@ -1092,9 +1142,21 @@ def main():
         for filename in args.preload:
             creator.add_preload_img(filename)
 
+    def expand_widths(widths):
+        result = []
+        for w in widths:
+            while w > 8:
+                result.append(8)
+                w -= 8
+            result.append(w)
+        return result
     msg_bitmaps = []
     for msg_arg in args.message:
-        msg_bitmaps.append(creator.bitmap(msg_arg))
+        char_width_pair = creator.bitmap(msg_arg)
+        char_widths = expand_widths(char_width_pair[1])
+        packed_bytes = repack_bitmaps_to_bytes(char_width_pair[0], char_widths)
+
+        msg_bitmaps.append(packed_bytes)
 
     if creator.are_preloaded_unused():
         print(
@@ -1137,6 +1199,43 @@ def main():
 
 def split_to_ints(list_str):
     return [int(x) for x in re.split(r'[\s,]+', list_str)]
+
+
+def repack_bitmaps_to_bytes(char_rows, char_widths):
+    """
+    char_rows: flat list of bytes, 11 per character (e.g. [c1r1, c1r2, ..., c1r11, c2r1, ..., c2r11, ...])
+    char_widths: list of widths in bits for each character (e.g. [8, 6, 7, ...])
+    Returns: (packed_bytes, total_pixel_columns)
+    """
+    num_rows = 11
+    total_num_bytes = math.ceil(sum(char_widths) / 8)
+    remainder = sum(char_widths) % 8
+    # Prepare a list of lists: one per row, each row is a list of bits
+    rows_bits = [[] for _ in range(num_rows)]
+    for char_idx, width in enumerate(char_widths):
+        for row_id in range(num_rows):
+            byte = char_rows[char_idx * num_rows + row_id]
+            # Extract only the leftmost 'width' bits
+            for bit in range(7, 7 - width, -1):
+                rows_bits[row_id].append((byte >> bit) & 1)
+    # add trailing zeros for last byte if it's not full
+    for row_id in range(num_rows):
+        trailing_zeros = 8 - remainder
+        for _ in range(trailing_zeros):
+            rows_bits[row_id].append(0)
+
+    # Now, flatten row-wise into a single bitstream (row-major order)
+    packed_bytes = []
+
+    for i in range(total_num_bytes):
+        for row_id in range(num_rows):
+            byte = 0
+            for bit in range(8):
+                byte = (byte << 1) | int(rows_bits[row_id][i * 8 + bit])
+            assert byte <= 255
+            packed_bytes.append(byte)
+
+    return packed_bytes, total_num_bytes
 
 
 if __name__ == '__main__':

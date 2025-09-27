@@ -339,6 +339,8 @@ buf.extend(scene_two_bytes)
 LedNameBadge.write(buf)
 ```
 
+A working example including a kind of 'string-bitmap' converter is shown in `examples/write_some_scenes.py`.
+
 #### Specifying a write method or device id
 
 There are two more parameters on the method `write`: the write method and the device id. They work exactly like the

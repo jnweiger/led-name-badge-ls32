@@ -89,7 +89,7 @@ address Python 3 explicitly by using the command `pip3` instead of `pip`.
     ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" < /dev/null 2> /dev/null
     brew install hidapi
 
-### Required dependencies on Windows 7/10
+### Required dependencies on Windows 7/10/11
 
 For Windows, we need to set up the libusb API for the LED badge device.
 The way described here, uses [libusb-win32](https://github.com/mcuee/libusb-win32/wiki)
@@ -104,16 +104,17 @@ in a quite low level way and in a quite old version:
     - `Next` -> `Next` -> Save as dialog `LS32_Sustm_HID.inf` -> `Save` (just to proceed, we don't need that file)
     - `Install Now...` -> Driver Install Complete -> `OK`
 
-There are other - meanwhile recommended, but untested here - ways to install and setup
-newer versions of `libusb-win32`: use
-[Zadig](https://zadig.akeo.ie/) (it is also available from the old libusb-win32 repo on
+There are other - meanwhile recommended - ways to install and setup newer versions of `libusb-win32`: use
+[Zadig](https://zadig.akeo.ie/)
+- Tested version 2.9 on 2025-09-18 with Windows 11: works fine (bensartori)
+- (it is also available from the old libusb-win32 repo on
 [GitHub repo](https://github.com/mcuee/libusb-win32/releases) of newer releases)
 or [libusbK](https://libusbk.sourceforge.net/UsbK3/index.html)
 
 Of course, Python is needed:
 
 - Download latest python from [python.org](https://www.python.org/downloads/),
-or specific versions from [here](https://www.python.org/downloads/windows/)
+  or specific versions from [here](https://www.python.org/downloads/windows/)
     - Checkmark the following options
         - `[x]` install Launcher for all Users
         - `[x]` Add Python X.Y to PATH
@@ -338,6 +339,8 @@ buf.extend(scene_two_bytes)
 LedNameBadge.write(buf)
 ```
 
+A working example including a kind of 'string-bitmap' converter is shown in `examples/write_some_scenes.py`.
+
 #### Specifying a write method or device id
 
 There are two more parameters on the method `write`: the write method and the device id. They work exactly like the
@@ -376,7 +379,7 @@ which id. Esp. after a reconnect or restart, the ids may change or exchange. If 
 only one device to a bus. So you can decide by bus number. Or keep a specific connect order (while the computer is
 already running), then you can decide by device number. Maybe the hidapi method is a bit more reliable. You have
 to experiment a bit.
- 
+
 
 ### Using the text generation
 
@@ -429,7 +432,8 @@ Run `python run_tests.py` from the `tests` directory.
 ## Related References (for USB-Serial devices)
 
 * https://github.com/Caerbannog/led-mini-board
-* http://zunkworks.com/projects/programmablelednamebadges/ (Offline since 2019. As of 07-2024, it is still available on https://web.archive.org)
+* http://zunkworks.com/projects/programmablelednamebadges/ (Offline since 2019. As of 07-2024, it is still available
+  on https://web.archive.org)
 * https://github.com/DirkReiners/LEDBadgeProgrammer
 * https://bitbucket.org/bartj/led/src
 * http://www.daveakerman.com/?p=1440

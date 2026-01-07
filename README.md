@@ -65,6 +65,29 @@ To reuse the venv again at a later point:
 
     source ledtag/bin/activate
     python led-badge-11x44.py …
+    
+### Nix / NixOS (flake)
+
+This repository provides a Nix flake (`flake.nix`) that defines a convenient
+development shell (Python with `pyusb`, `pillow` and a `pyhidapi` compatibility
+shim).
+
+Enter the dev shell:
+
+    nix develop
+
+Inside the shell you can use the provided helper command `led-badge`.
+
+Examples:
+
+    # single message
+    led-badge -M hidapi "I:HEART2:you"
+
+    # up to 8 messages (memory banks)
+    led-badge -m 6 -s 8 "Hello" "World!"
+
+    # bike left->right, then right->left (2 messages)
+    led-badge -s7 -m0,1 :bicycle: :bicycle_r:
 
 ### Required dependencies on Fedora Systems
 

@@ -320,12 +320,12 @@ class SimpleTextAndIcons:
         bitmap_builtin[bitmap_named[i][2]] = bitmap_named[i]
 
     def __init__(self):
-        self.bitmap_preloaded = [([], 0)]
+        self.bitmap_preloaded = {}
         self.bitmaps_preloaded_unused = False
 
-    def add_preload_img(self, filename):
+    def add_preload_img(self, filename, identifier):
         """Still used by main, but deprecated. PLease use ":"-notation for bitmap() / bitmap_text()"""
-        self.bitmap_preloaded.append(SimpleTextAndIcons.bitmap_img(filename))
+        self.bitmap_preloaded[filename] = SimpleTextAndIcons.bitmap_img(filename)
         self.bitmaps_preloaded_unused = True
 
     def are_preloaded_unused(self):
@@ -336,20 +336,61 @@ class SimpleTextAndIcons:
     def _get_named_bitmaps_keys():
         return SimpleTextAndIcons.bitmap_named.keys()
 
-    def bitmap_char(self, ch):
-        """Returns a tuple of 11 bytes, it is the bitmap data of given character.
+    def bitmap_for(self, identifier):
+        """Returns a tuple of 11 bytes, it is the bitmap data of given character or image.
             Example: ch = '_' returns (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255).
             The bits in each byte are horizontal, highest bit is left.
         """
-        if ord(ch) < 32:
-            if ch in SimpleTextAndIcons.bitmap_builtin:
-                return SimpleTextAndIcons.bitmap_builtin[ch][:2]
+        if len(identifier) == 1:
+            # single character
+            o = SimpleTextAndIcons.char_offsets[identifier]
+            return SimpleTextAndIcons.font_11x44[o:o + 11], 1
+        if identifier in SimpleTextAndIcons.bitmap_named:
+            # identifier of named bitmap
+            bn = SimpleTextAndIcons.bitmap_named[identifier]
+            return (bn[0], bn[1])
+        # identifier of preloaded image file
+        return self.bitmap_preloaded[identifier]
 
-            self.bitmaps_preloaded_unused = False
-            return self.bitmap_preloaded[ord(ch)]
+    def _parse(self, text):
+        """ Parses a text and returns a list of identifiers.
+            An identifier can be a single character (in which case that character should be printed),
+            the name of a builtin bitmap, or the name of a preloaded image.
+        """
+        pos = 0
+        out = []
+        def get_symbol(text, pos):
+            """ Parses a single symbol: either a single character or a bitmap identifier enclosed in :
+            """
+            word = ""
+            ppos = pos
+            closed = False
+            while ppos < len(text):
+                if text[ppos] != ':':
+                    word = word + text[ppos]
+                else:
+                    closed = True
+                    break
+                ppos = ppos + 1
+            if not closed:
+                # unmatched `:`: keep the string as-is
+                return ":", pos
+            if word == "":
+                # turn `::` into a single literal :
+                return ":", ppos+1
+            if word not in SimpleTextAndIcons.bitmap_named and word not in self.bitmap_preloaded:
+                self.bitmap_preloaded[word] = SimpleTextAndIcons.bitmap_img(word)
+            return word, ppos+1
 
-        o = SimpleTextAndIcons.char_offsets[ch]
-        return SimpleTextAndIcons.font_11x44[o:o + 11], 1
+        while pos < len(text):
+            if text[pos] == ':':
+                sym, pos = get_symbol(text, pos+1)
+                out.append(sym)
+            else:
+                out.append(text[pos])
+                pos = pos + 1
+        return out
+
 
     def bitmap_text(self, text):
         """Returns a tuple of (buffer, length_in_byte_columns_aka_chars)
@@ -361,22 +402,11 @@ class SimpleTextAndIcons:
           ":gfx/logo.png:" preloads the file gfx/logo.png and is replaced the corresponding control char.
         """
 
-        def replace_symbolic(m):
-            name = m.group(1)
-            if name == '':
-                return ':'
-            if re.match('^[0-9]*$', name):  # py3 name.isdecimal()
-                return chr(int(name))
-            if '.' in name:
-                self.bitmap_preloaded.append(SimpleTextAndIcons.bitmap_img(name))
-                return chr(len(self.bitmap_preloaded) - 1)
-            return SimpleTextAndIcons.bitmap_named[name][2]
-
-        text = re.sub(r':([^:]*):', replace_symbolic, text)
+        parsed = self._parse(text)
         buf = array('B')
         cols = 0
-        for c in text:
-            (b, n) = self.bitmap_char(c)
+        for identifier in parsed:
+            (b, n) = self.bitmap_for(identifier)
             buf.extend(b)
             cols += n
         return buf, cols
